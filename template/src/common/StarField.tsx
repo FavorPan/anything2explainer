@@ -23,11 +23,19 @@ export type StarFieldProps = {
   seed: number;
   region: [number, number, number, number]; // 出生区域 x,y,w,h
   opacity: number;
+  color: string; // 粒子色（dark 白星 / mint 墨色浮尘）
 };
 // 主会话（QC v1 RQ1）：成片星点密度 ≈原片 50%、无 255 级亮星 → count 45→80、峰值上限 200→255
-export const STAR_DEFAULT: StarFieldProps = {variant: 'drift', count: 80, speed: 1, lifetime: [60, 200], twinkle: 0.3, size: [2, 4], brightness: [35, 255], seed: 7, region: [0, 0, 1280, 687], opacity: 1};
+export const STAR_DEFAULT: StarFieldProps = {variant: 'drift', count: 80, speed: 1, lifetime: [60, 200], twinkle: 0.3, size: [2, 4], brightness: [35, 255], seed: 7, region: [0, 0, 1280, 687], opacity: 1, color: '#ffffff'};
 
 type Star = {x: number; y: number; s: number; a: number};
+/** 星点软边阴影色：粒子色 × alpha（#rgb/#rrggbb → rgba；其余色串原样返回）。dark 白星 = rgba(255,255,255,.8)，与主题化改造前逐字节同义。 */
+const starGlow = (color: string, a = 0.8) => {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color);
+  if (!m) return color;
+  const v = m[1].length === 3 ? m[1].split('').map((c) => c + c).join('') : m[1];
+  return `rgba(${parseInt(v.slice(0, 2), 16)},${parseInt(v.slice(2, 4), 16)},${parseInt(v.slice(4, 6), 16)},${a})`;
+};
 /** 纯函数：给定帧号返回全部可见星点（供 Canvas/测试复用）。 */
 export const starsAt = (frame: number, p: StarFieldProps): Star[] => {
   if (p.variant === 'none') return [];
@@ -88,9 +96,9 @@ export const StarField: React.FC<Partial<StarFieldProps> & {frame?: number}> = (
             width: s.s,
             height: s.s,
             borderRadius: '50%',
-            background: '#fff',
+            background: p.color,
             opacity: s.a,
-            boxShadow: `0 0 ${Math.max(2, s.s * 1.3)}px rgba(255,255,255,0.8)`, // 原片 blob 在 thr35 下面积 5–11px、峰值多在 35–90：软而暗
+            boxShadow: `0 0 ${Math.max(2, s.s * 1.3)}px ${starGlow(p.color)}`, // 原片 blob 在 thr35 下面积 5–11px、峰值多在 35–90：软而暗
           }}
         />
       ))}
@@ -98,7 +106,7 @@ export const StarField: React.FC<Partial<StarFieldProps> & {frame?: number}> = (
   );
 };
 
-/** 背景轨：按原片帧号查 BgSpec（后者优先），渲染 雾底 + 星点。N = 原片帧号。未覆写 → 默认 drift + 雾底开。 */
+/** 背景轨（dark）：按原片帧号查 BgSpec（后者优先），渲染 雾底 + 星点。N = 原片帧号。未覆写 → 默认 drift + 雾底开。 */
 export const BgTrack: React.FC<{specs: BgSpec[]; defaultStars?: Partial<StarFieldProps>; defaultFog?: boolean}> = ({specs, defaultStars, defaultFog = FOG_DEFAULT_ON}) => {
   const N = useCurrentFrame() + 1;
   let stars: Partial<StarFieldProps> = {...defaultStars};

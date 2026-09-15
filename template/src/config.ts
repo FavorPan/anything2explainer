@@ -13,8 +13,14 @@ export const VIDEO = {
    */
   lang: 'zh' as 'zh' | 'en',
   /**
-   * 幕底：'stars' 星点 + 雾底渐变（默认，样片风格）｜'dots' 点阵波（video-talkcraft dot-field-wave 移植，`common/DotFieldBg.tsx`）。
-   * 两者互斥；镜头里的 BG_Gn 覆写（`stars:'none'` 关幕底）对两种方案都生效。frame_metrics.py 会按这里的值抠掉幕底再统计。
+   * 配色主题（取值定义见 src/theme.ts）：'mint' 小清新浅色（默认，薄荷苏打：浅底墨线白卡 + 薄荷重点 + 光斑/浅点阵幕底，
+   * 字幕为墨色无描边）｜'dark' 暗色科技（黑底白线紫重点，样片《RAG 与知识库》风格）。
+   * 影响范围：调色板、幕底、字幕样式、进度条、片尾压底色、光效，以及 frame_metrics.py 的判色阈值（脚本 auto 读这里）。
+   */
+  style: 'mint' as 'mint' | 'dark',
+  /**
+   * 幕底：'stars' 星点 + 雾底渐变（dark 默认；mint 下自动变成 光斑雾底 + 墨色浮尘）｜'dots' 点阵波（video-talkcraft dot-field-wave 移植，`common/DotFieldBg.tsx`；mint 下为浅色点阵）。
+   * 两者互斥；镜头里的 BG_Gn 覆写（`stars:'none'` 关幕底）对两种主题都生效。frame_metrics.py 会按这里的值抠掉幕底再统计。
    */
   bg: 'stars' as 'stars' | 'dots',
   /**

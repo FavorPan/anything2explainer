@@ -19,26 +19,26 @@
 | 名称 | 公式 | 帧数 |
 |---|---|---|
 | 脉冲 | `scale = emphasisPulse(n, {peak: 1.11, up: 13, hold: 4, down: 13})` | 30 |
-| 灰→紫变色 | `mix(GREY, PURPLE, clamp01(n/11))`（边框与填充同变） | 11 |
-| 柔光亮起 | boxShadow GLOW_PURPLE_S 的 α 0→1 | 8 |
+| 灰→重点色变色 | `mix(GREY, ACCENT, clamp01(n/11))`（边框与填充同变） | 11 |
+| 柔光亮起 | boxShadow GLOW_ACCENT_S 的 α 0→1 | 8 |
 | 白闪 | 元素 filter brightness 1→1.6→1 | 6–10 |
-| 高亮条 wipe | 紫色半透明条自左 scaleX 0→1 | 12 |
+| 高亮条 wipe | 重点色半透明条自左 scaleX 0→1 | 12 |
 
 ## 光效（谁发光、怎么亮；规则见 `composition-and-light.md`，组件在 `src/fx.tsx`）
 | 名称 | 公式/组件 | 帧数 | 用途 |
 |---|---|---|---|
-| 主角常亮 | `<HeroGlow x y w h N>` 双层紫柔光 + 30 帧呼吸 ±15%；或 `LLMIcon glow` | 常驻 | **每镜头主角必带**；配角不带 |
-| 紫光条横扫 | `<LightSweep N rounds={[T0+4,T0+22,T0+40]}>` 每轮 3 条、2 帧错峰、16 帧、α .6/.55/.55 白芯 | 3×16 | 高光时刻开场的「舞台追光」 |
+| 主角常亮 | `<HeroGlow x y w h N>` 双层主题柔光 + 30 帧呼吸 ±15%；或 `LLMIcon glow` | 常驻 | **每镜头主角必带**；配角不带 |
+| 重点光条横扫 | `<LightSweep N rounds={[T0+4,T0+22,T0+40]}>` 每轮 3 条、2 帧错峰、16 帧、α .6/.55/.55 白芯 | 3×16 | 高光时刻开场的「舞台追光」 |
 | 舞台光线 | `<StageLine N f0 flashAt>` 14 帧展宽到 720 → 呼吸 → 节拍帧白闪 3 帧消失 | 14+ | 主角落点的预示线 |
-| 幽灵轮廓 | `<GhostText opacity={ghostOpacity(N,f0,until)}>` 白描边 10% 隐现 | 12 淡入 | 主角大字出现前约 40 帧 |
-| 光环 | `<HaloRing p fillOp phase half>` 白描边 draw-on 20 帧 + 紫渐变 12 帧 + 3 圈虚线波纹 2 帧一相位 | 20 | 象征物脚下（back / 主体 / front 三层） |
-| 紫硬投影 | 大字 textShadow `6px 6px 0 PURPLE, 0 0 28px rgba(102,45,248,.45)`（`BigNumber` 默认） | 常驻 | Audiowide / Orbitron 大字、片名 |
-| 紫描边 | Noto 900 大字 `WebkitTextStroke 2.5px PURPLE` + `paintOrder: stroke fill` + 紫柔光 | 常驻 | 结论大字 |
-| 橙色发光 | `GLOW_ORANGE` / textShadow 橙 | 常驻 | 指标数字、结果项（−49%、¥3.20） |
-| 柔光亮起 | boxShadow `GLOW_PURPLE_S` α 0→1 | 8 | 重点转移到某一项 |
+| 幽灵轮廓 | `<GhostText opacity={ghostOpacity(N,f0,until)}>` 描边 10% 隐现 | 12 淡入 | 主角大字出现前约 40 帧 |
+| 光环 | `<HaloRing p fillOp phase half>` 描边 draw-on 20 帧 + accent 渐变 12 帧 + 3 圈虚线波纹 2 帧一相位 | 20 | 象征物脚下（back / 主体 / front 三层） |
+| 重点色硬投影 | 大字 textShadow `6px 6px 0 ACCENT_DEEP, 0 0 28px rgba(glowRGB,.45)`（`BigNumber` 默认，随主题） | 常驻 | Audiowide / Orbitron 大字、片名 |
+| 重点色描边 | Noto 900 大字 `WebkitTextStroke 2.5px ACCENT` + `paintOrder: stroke fill` + 主题柔光 | 常驻 | 结论大字 |
+| 警示发光 | `GLOW_ORANGE` / textShadow warn | 常驻 | 指标数字、结果项（−49%、¥3.20） |
+| 柔光亮起 | boxShadow `GLOW_ACCENT_S` α 0→1 | 8 | 重点转移到某一项 |
 | 光先灭 | 离场前 6 帧 glow α→0，再整体归零淡出 | 6+8 | 任何带光元素的离场 |
 | 白闪 | filter brightness 1→1.6→1，或 `StageLine` 的 flash | 3–6 | 事件：点击、命中、落槌 |
-一帧内：主角光 1 处 + 重点光 ≤1 处；光只有紫 / 橙 / 红三色；白 bloom 只给结构线条。三轮扫光 → 光线 → 轮廓 → 白闪 + glitch 的完整编排见 `composition-and-light.md` §3 与 `fx.tsx` 的 `SET_PIECE`。
+一帧内：主角光 1 处 + 重点光 ≤1 处；光只有重点（accent）/ 指标（warn）/ 红三色；bloom 只给结构线条。三轮扫光 → 光线 → 轮廓 → 白闪 + glitch 的完整编排见 `composition-and-light.md` §3 与 `fx.tsx` 的 `SET_PIECE`。
 
 ## 离场（**硬切前必须归零**）
 | 名称 | 公式 | 帧数 |

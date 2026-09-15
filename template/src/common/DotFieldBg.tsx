@@ -1,6 +1,7 @@
 import React, {useLayoutEffect, useRef} from 'react';
 import {useCurrentFrame, useVideoConfig} from 'remotion';
 import type {BgSpec} from './types';
+import {THEME} from '../theme';
 
 /**
  * 幕底方案二「点阵波」：video-talkcraft `template/motion-systems/backdrop.tsx` 的 dot-field-wave 移植版。
@@ -17,7 +18,7 @@ const GRAIN_URL =
   "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .5 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>\")";
 
 const drawDots = (ctx: CanvasRenderingContext2D, t: number) => {
-  ctx.fillStyle = '#0b0c11';
+  ctx.fillStyle = THEME.dotBase;
   ctx.fillRect(-DW, -DH, DW * 3, DH * 3);
   const phase = ((t % 14) / 14) * 1700 - 300;
   for (let y = DOT_Y0; y < DH; y += DOT_STEP) {
@@ -26,8 +27,8 @@ const drawDots = (ctx: CanvasRenderingContext2D, t: number) => {
       const k = Math.max(0, 1 - d / 280);
       const kk = k * k;
       const edge = Math.min(1, Math.max(0, 1.25 - Math.hypot((x - 480) / 560, (y - 270) / 360)));
-      ctx.globalAlpha = (0.2 + 0.6 * kk) * edge;
-      ctx.fillStyle = '#cfe0ff';
+      ctx.globalAlpha = (0.2 + 0.6 * kk) * edge * THEME.dotAlphaScale;
+      ctx.fillStyle = THEME.dotColor;
       ctx.beginPath();
       ctx.arc(x, y, 1.5 + 0.5 * kk, 0, 6.283);
       ctx.fill();
@@ -64,7 +65,7 @@ export const DotFieldBg: React.FC<{specs: BgSpec[]; speed?: number; grain?: bool
   if (!show) return null;
   const t = (frame / fps) * speed;
   return (
-    <div style={{position: 'absolute', inset: 0, overflow: 'hidden', background: '#0b0b0f'}}>
+    <div style={{position: 'absolute', inset: 0, overflow: 'hidden', background: THEME.dotOuter}}>
       <DotCanvas t={t} />
       {grain ? <div style={{position: 'absolute', inset: 0, backgroundImage: GRAIN_URL, backgroundSize: '160px 160px', opacity: 0.06, mixBlendMode: 'overlay', pointerEvents: 'none'}} /> : null}
     </div>

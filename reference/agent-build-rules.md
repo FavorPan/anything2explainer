@@ -13,10 +13,10 @@
 ## 1. 工程约定
 - 帧号 **N = useCurrentFrame() + F0**（F0 = 该镜头 ShotDef.from；1 起含端点）。分镜表、timeline 里的帧号都是 N。
 - 构建组 G1–Gn（每章两组，各 5–7 个镜头；组数按片长，样片档 8 组；覆盖层（`src/overlay/`，片头/章节卡/顶部 HUD/流程轨/片尾）由主会话维护，构建组不要画这些）。每个镜头一个组件文件 `src/shots/Gn/SCxx.tsx`；`src/shots/Gn/index.ts` 导出 `SHOTS_Gn: ShotDef[]`（{id,from,to,Comp,layer?}，数组顺序即层序）与 `BG_Gn: BgSpec[]`（幕底覆写，见下）。**只改 `src/shots/Gn/**`**，不改 Main/Root/common/其他组；共用层要改的写进 `src/shots/Gn/BUILD_NOTES.md` 并在最终回复里提出。
-- 本片图元库 `src/ui.tsx`（从 `'../../ui'` 导入）：调色板 PURPLE/PURPLE_LIGHT/PURPLE_TECH/ORANGE/CORAL/RED_DEEP/GREEN/GREY/GREY_LINE/WHITE、GLOW_*/BLOOM/TEXT_GLOW；`CText/TechText/MonoText/Box/Pill/TagBlock/Svg/LineArrow/ArrowH/Check/Cross/DocIcon/DBIcon/ChunkCard/LLMIcon/TopCapsule/Counter`；动效小工具 `fadeIn/fadeOut/slideUp/scaleIn/exitAccel/exitFade/stagger/abs`。**优先用这些**，保证各组画风一致；缺什么就在自己组目录里补，不改 ui.tsx（要加进 ui.tsx 的写进 BUILD_NOTES）。
+- 本片图元库 `src/ui.tsx`（从 `'../../ui'` 导入）：**调色板是语义名，值随 `config.style` 主题（`src/theme.ts`）**——`ACCENT/ACCENT_LIGHT/ACCENT_TECH/ACCENT_DEEP/ACCENT_PALE`（当前重点族）、`WARN/CORAL/RED_DEEP`（指标/警示）、`OK`（正确勾）、`GREY/GREY_MID/GREY_LINE/GREY_LIGHT`（非重点）、`LINE/TEXT`（描边/结构文字）、`FILL/FILL_DIM`（图形填充/次级填充）、`WHITE`（色块上的白字，不随主题翻底）、`GLOW_ACCENT/GLOW_ACCENT_S/GLOW_ORANGE/GLOW_RED/BLOOM/TEXT_GLOW/PILL_SHADOW`；**不要写死十六进制**（镜头里手写色值在换主题时会失配）。组件：`CText/TechText/MonoText/Box/Pill/TagBlock/Svg/LineArrow/ArrowH/Check/Cross/DocIcon/DBIcon/ChunkCard/LLMIcon/PersonIcon/CodeCard/TopCapsule/Counter`；动效小工具 `fadeIn/fadeOut/slideUp/scaleIn/exitAccel/exitFade/stagger/abs`。**优先用这些**，保证各组画风一致；缺什么就在自己组目录里补，不改 ui.tsx（要加进 ui.tsx 的写进 BUILD_NOTES）。
 - 光效 / 高光时刻 / 纵深 / 运镜图元 `src/fx.tsx`（从 `'../../fx'` 导入）：`LightBar/LightSweep/StageLine/GhostText/ghostOpacity/HaloRing/HeroGlow/BigNumber/countTo/Sparkle/GradBall/TiltPlane/CameraRig/camAt/SET_PIECE/setPiece`。
 - 共用层从 `'../../common'` 导入：`GlitchIn`（12 帧 glitch 入场）、`kf/stepKf/slideIn/powOutRemain/expOut/powIn/easeInOutPow/cubicBezier/BEZ_SCALE_IN/emphasisPulse/rnd`、`StarField/Fog`、`FONT_HEAVY/FONT_TECH/FONT_WIDE/FONT_ORB/FONT_MONO/FONT_SERIF`、`DirBlur`、`SubtitleLine/strokeShadow`（描边字样式复用，不是画字幕）、`TOTAL_FRAMES/CHAPTER_STARTS/SENTENCES`、`FootageTrack`（可选实拍）。字体已由 Main 的 `Fonts` 全局加载（Noto Sans SC 100–900、Exo 2 Italic、Audiowide、Orbitron），组件内**不要**再 delayRender 加载字体。**中文文本一律 FONT_HEAVY**（FONT_MONO 无 CJK 字形会走系统兜底，跨机不确定；MONO 只给代码/等宽数字）。
-- 全片常驻层由 Main 渲染：黑底 < 幕底（`config.bg`：雾底 Fog(y415→720 #000→#212121) + 星点 StarField，或点阵波 DotFieldBg）< 你的镜头 < 进度条(y687–720 半透明) < `layer:'aboveBar'` 镜头 < 字幕。**镜头组件不要画不透明黑底**（会盖掉幕底）；确需纯黑/无星（如片头第一帧、强调黑场）用 `BG_Gn: [{from,to,fog:false,stars:'none'}]`。
+- 全片常驻层由 Main 渲染：底色（`THEME.base`，dark #000 / mint #F4FAF6）< 幕底（dark：雾底 Fog + 星点 StarField；mint：光斑浮尘 LightBg；或点阵波 DotFieldBg，随 `config.bg`）< 你的镜头 < 进度条(y687–720 半透明) < `layer:'aboveBar'` 镜头 < 字幕。**镜头组件不要画不透明底色**（会盖掉幕底）；确需纯底/无幕底（如片头第一帧、强调黑场）用 `BG_Gn: [{from,to,fog:false,stars:'none'}]`。
 - 随机只用 `rnd(...seeds)`（确定性），禁 `Math.random`。所有动画都是 N 的纯函数（不要用 useState/useEffect 做动画）。
 
 ## 2. 版面安全区
@@ -27,15 +27,15 @@
 
 ## 3. 动效与节奏（细节见 motion-vocabulary.md 与 composition-and-light.md）
 - **主角与尺寸**：每镜头一个主角，高度 ≥170px 或大字 ≥96px，在第 1–2 个节拍入场；三档尺寸（主角 ≥170 / 配角 60–110 / 标签 22–30）；内容区最大物体 <110px 持续 >45 帧是缺陷。时间轴 / 公式 / 表格这类细小题材必须配主角（大数字、放大的当前项）。
-- **光跟主角**：主角必带 `GLOW_PURPLE` / `HeroGlow` / `HaloRing` 或大字紫硬投影；胶囊、流程轨、标签、表格默认不发光，当前重点 ≤1 处 `GLOW_PURPLE_S`；离场先灭光再淡出。
+- **光跟主角**：主角必带 `GLOW_ACCENT` / `HeroGlow` / `HaloRing` 或大字主题硬投影；胶囊、流程轨、标签、表格默认不发光，当前重点 ≤1 处 `GLOW_ACCENT_S`；离场先灭光再淡出。
 - **高光时刻**：分镜表「全局约束 §高光时刻清单」里的镜头按 composition-and-light.md §3 编排（`LightSweep` → `StageLine` → `GhostText` → 白闪 + `GlitchIn` → 脉冲 → 副标 → 拆词），≥90 帧；不要用「胶囊 + 图标 + 一行字」应付。
 - **背景只有幕底**（星点或点阵波）：不撒小图标做氛围；表现「多」用 ≥6px 方点阵列，按节拍点亮。
 - **纵深**：空间 / 层级 / 索引用 `TiltPlane` 叠层，筛选用 `Trap`，旋转只给齿轮表盘转盘。
 - **持续动作**（composition-and-light.md §7）：每个字幕块的动词有持续到下一拍的动作；入场后不许完全静止 >30 帧；没有其它运镜的镜头加 1.0→1.05 慢推（内容留在 x 89–1191 / y 122–607）。完工前 `python3 scripts/motion_check.py <Gn>`：每镜头静止 ≤40%、最长 ≤0.7 s（成片复测口径更严），数字写进 BUILD_NOTES。
-- **共用小工具必须用共用层的**：`softOp / firstOp / exitOp / glowOffK / mix / mixHex / glowPurple(k) / glowPurpleS(k)`（ui.tsx）、`GlowBlob / Vignette`（fx.tsx）；首帧入场用 `firstOp`（`fadeIn(0)=0` 会空一帧），硬切前 `exitOp`，带光元素先 `glowOffK` 再淡出。
+- **共用小工具必须用共用层的**：`softOp / firstOp / exitOp / glowOffK / mix / mixHex / glowAccent(k) / glowAccentS(k)`（ui.tsx）、`GlowBlob / Vignette`（fx.tsx）；首帧入场用 `firstOp`（`fadeIn(0)=0` 会空一帧），硬切前 `exitOp`，带光元素先 `glowOffK` 再淡出。
 - 入场：默认 `SoftIn`（文字/标签/小图标）；GlitchIn 12 帧模板只给白名单里的重点词（§8）；自下滑入 `y = yEnd + Δ·powOutRemain(n,22,2.5)`（**Δ≤120**，再大会穿字幕带；要从画外进来用侧向滑入 Δ 260–320 + 前 6 帧渐入）；21 帧缩放入场 `s = s0+(1−s0)·BEZ_SCALE_IN(n/21)`（图标）。列表/卡片阵列按 **2 帧错峰**（slide+fade，不要用 GlitchIn 错峰）。
 - 线条/箭头 draw-on：SVG `clipPath` rect 或 stroke-dasharray，箭头**自根部长出**，16–28 帧。
-- 强调：`emphasisPulse(n,{peak:1.11})`，灰→紫 11 帧变色，柔光 `box-shadow 0 0 24px 8px rgba(102,45,248,.6)`。
+- 强调：`emphasisPulse(n,{peak:1.11})`，灰→accent 11 帧变色（用 `mix(GREY, ACCENT, k)` 推导，别写死），柔光 `glowAccentS(k)`。
 - 离场：**硬切前必须归零**——`opacity = 1 − (n/N)^1.5`（N=6–12，末帧 0；共用层 `exitOp`），可配幂缓入 `Δ = c·t^2` 的下摇/左滑（旁边有字幕带时限幅 ≤10px）；带光元素先 `glowOffK` 灭光再淡出。不要用每帧 6.7% 的 exitFade 收尾（末帧还剩 40–60% 会"啪"）。相邻镜头之间**不留空白帧**（背景层常驻，允许 0–3 帧的重叠）。
 - 节拍：元素入场对齐解说词的**字幕块起始帧**（timeline.md 里每个 ｜ 块），关键词出现不晚于对应字幕块起始 +3 帧、不早于 −6 帧。
 - **运镜**：按分镜表「运镜清单」做，每章 ≥3 次、每镜头 ≤1 次，用 `CameraRig`（定点推近 1→1.33 / 33 帧、拉回 37–42 帧、承接位移 16 帧、整组平移、视差 2–3 层）；运镜期间不做 GlitchIn 与错峰入场，HUD / 流程轨 / 字幕不动；一句没有新元素时用一次推近代替硬塞元素。词汇与帧数见 motion-vocabulary.md §镜头运动。
@@ -64,4 +64,4 @@
 ## 8. 闪烁（GlitchIn）使用白名单（满屏文字都闪会像掉帧，只给重点加）
 - **每个镜头最多 1 处 glitch，且只用于该镜头的重点词**（下表）；其余一切文字/标签/胶囊/数字/图标入场一律用 `SoftIn`（`ui.tsx`，8 帧淡入 + 10px 上浮，签名与 GlitchIn 相同可直接替换）或 fadeIn/slideUp/scaleIn。HUD 换词由 G0 用 SoftIn。
 - 白名单在本片 `分镜表.md` 末尾「全局约束」给出（每镜头最多一个重点词；样片实例见 skill `examples/rag/AGENT_RAG_BUILD_RULES.md` §8）。**不在表内的镜头一处 glitch 都不要。**
-- 用 `rgbSplit/slices` 的重口味 glitch 只允许片头、章节卡标题、主角登场、片尾大字。**rgbSplit 副本画在下层：children 含不透明色底（TagBlock/色块）时 tint 副本被盖没等于没做**——色差感只能出现在裸白字/描边元素上。
+- 用 `rgbSplit/slices` 的重口味 glitch 只允许片头、章节卡标题、主角登场、片尾大字。**rgbSplit 副本画在下层：children 含不透明色底（TagBlock/色块）时 tint 副本被盖没等于没做**——色差感只能出现在裸文字/描边元素上。

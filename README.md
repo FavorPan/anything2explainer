@@ -7,7 +7,7 @@
 
 **English** | [简体中文](README_ZH.md)
 
-**Topic in, narrated explainer video out.** anything2explainer is a [Claude Code](https://claude.com/claude-code) / [Codex](https://openai.com/codex) skill that turns any topic into a black-canvas motion-graphics explainer video with TTS voiceover, subtitles and a chapter progress bar, in Chinese or English. Every frame is drawn in code with [Remotion](https://remotion.dev) (React + TypeScript). No stock footage, no generative video model, no frames lifted from anyone else's work.
+**Topic in, narrated explainer video out.** anything2explainer is a [Claude Code](https://claude.com/claude-code) / [Codex](https://openai.com/codex) skill that turns any topic into a motion-graphics explainer video with TTS voiceover, subtitles and a chapter progress bar, in Chinese or English. Two color themes ship out of the box — a fresh mint light theme (default) and a dark tech theme on a black canvas — switched by one line in `src/config.ts`. Every frame is drawn in code with [Remotion](https://remotion.dev) (React + TypeScript). No stock footage, no generative video model, no frames lifted from anyone else's work.
 
 It is not a CLI. What ships here is the whole method an AI coding agent needs to finish the film: a compilable Remotion template, a primitives and lighting library, tooling for voiceover / storyboard / rendering / quantitative QC, written style and motion specs, a multi-agent division-of-labour protocol, and one complete reference film as the quality bar.
 
@@ -35,7 +35,7 @@ Both cuts share one storyboard and 44 shots; the English cut re-times every shot
 | Frame / rate | 1280×720 @ 30fps, H.264 |
 | Length | your call (see table below); 2–8 minutes all work |
 | Language | Chinese or English (`lang` in `src/config.ts`); typography, subtitle budgets and TTS switch with it |
-| Look | black canvas with one of two backdrops, star field + fog gradient or dot-field wave (`bg` in `src/config.ts`; the dot-field wave is ported from video-talkcraft); white line art + purple accents; ultra-bold headline type |
+| Look | themeable: mint light theme (default; ink line art on pale green canvas with mint accents and soft bokeh backdrop) or dark tech theme (black canvas, star field + fog gradient or dot-field wave backdrop, white line art + purple accents; the dot-field wave is ported from video-talkcraft); ultra-bold headline type; picked via `style` in `src/config.ts`, palette in `src/theme.ts` |
 | Persistent layers | 44px white-on-black-stroke subtitles, bottom chapter progress bar, top capsule HUD, optional pipeline rail |
 | Voiceover | Chinese: edge-tts `zh-CN-YunxiNeural` (Yunxi, male). English: kokoro-82m `am_liam` (Liam, male). Or bring your own TTS / finished audio |
 
@@ -201,7 +201,7 @@ examples/contrast/        6 bad/good frame pairs — the yardstick for compositi
 
 ## Acknowledgements
 
-The visual language and the quality bar are inspired by the Douyin creator **@图灵宇宙** — black canvas, white line art with purple accents, ultra-bold headline type: that vocabulary was learned from their videos. Everything in this repo is drawn from scratch in code; none of their frames, assets or project files are used. If you feel this crosses a line, please open an issue.
+The visual language and the quality bar are inspired by the Douyin creator **@图灵宇宙** — dark canvas, line art with bold accent color, ultra-bold headline type: that vocabulary was learned from their videos and lives on in the dark theme; the default mint theme reinterprets it for a light canvas. Everything in this repo is drawn from scratch in code; none of their frames, assets or project files are used. If you feel this crosses a line, please open an issue.
 
 ## Originality
 

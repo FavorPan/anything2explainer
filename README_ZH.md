@@ -7,7 +7,7 @@
 
 [English](README.md) | **简体中文**
 
-**给一个主题，产出一条带配音的科普讲解视频。** anything2explainer 是一个 [Claude Code](https://claude.com/claude-code) / [Codex](https://openai.com/codex) skill：输入任意主题，输出一条黑底 MG（motion graphics）风格的讲解视频，带 TTS 配音、字幕和章节进度条，中文或英文都行。画面全部由 [Remotion](https://remotion.dev)（React + TypeScript）代码绘制，不用素材库，不用视频生成模型，也不使用任何现有视频的帧。
+**给一个主题，产出一条带配音的科普讲解视频。** anything2explainer 是一个 [Claude Code](https://claude.com/claude-code) / [Codex](https://openai.com/codex) skill：输入任意主题，输出一条 MG（motion graphics）风格的讲解视频，带 TTS 配音、字幕和章节进度条，中文或英文都行。内置双主题配色：默认薄荷小清新浅色（墨线白卡 + 薄荷重点 + 光斑幕底），可一键切暗色科技黑底（`src/config.ts` 的 `style`）。画面全部由 [Remotion](https://remotion.dev)（React + TypeScript）代码绘制，不用素材库，不用视频生成模型，也不使用任何现有视频的帧。
 
 它不是一个 CLI。仓库里装的是让 AI 编程 agent 把片子做出来的整套方法：可编译的 Remotion 模板工程、图元与光效库、配音/分镜/渲染/量化质检工具、风格与动效规范、多 agent 分工协议，以及一条完整样片作为质量标尺。
 
@@ -35,7 +35,7 @@ https://github.com/user-attachments/assets/e2771c68-a28c-4459-ac5a-a5b685181eeb
 | 画幅 / 帧率 | 1280×720 @ 30fps，H.264 |
 | 时长 | 由你定（见下表），2–8 分钟都能做 |
 | 语言 | 中文或英文（`src/config.ts` 的 `lang`）；排版、字幕长度预算、配音默认值随它切换 |
-| 视觉 | 黑底，幕底二选一：星点 + 雾底渐变，或点阵波（`src/config.ts` 的 `bg`；点阵波移植自 video-talkcraft 的 dot-field-wave）；白线条图形 + 紫色重点；超粗黑体大字 |
+| 视觉 | 双主题（`src/theme.ts` 取值、`src/config.ts` 的 `style` 切换）：默认薄荷浅色（浅底墨线白卡 + 薄荷重点，光斑浮尘/浅点阵幕底）；暗色科技为黑底，幕底二选一：星点 + 雾底渐变，或点阵波（`bg`；点阵波移植自 video-talkcraft 的 dot-field-wave）；白/墨线条图形 + 主题重点色；超粗黑体大字 |
 | 常驻层 | 44px 白字黑边字幕、底部章节进度条、顶部胶囊 HUD、可选流程轨 |
 | 配音 | 中文 edge-tts `zh-CN-YunxiNeural`（云希，男声）/ 英文 kokoro-82m `am_liam`（Liam，男声）；也可用你自己的 TTS 或成品配音 |
 
@@ -201,7 +201,7 @@ examples/contrast/        6 组正例/反例帧对照（构图与光的标尺）
 
 ## 致谢
 
-视觉风格的灵感与标尺来自抖音创作者 **@图灵宇宙** 的科普视频——黑底、白线条配紫色重点、超粗黑体大字这套语言是从他的片子里学来的。本项目所有画面均由代码原创绘制，不使用其任何帧、素材或工程文件；如有不妥请开 issue 告知。
+视觉风格的灵感与标尺来自抖音创作者 **@图灵宇宙** 的科普视频——暗底、线条图形配重点色、超粗黑体大字这套语言是从他的片子里学来的，保留在暗色主题中；默认薄荷浅色主题是对同一构图语言的浅色重释。本项目所有画面均由代码原创绘制，不使用其任何帧、素材或工程文件；如有不妥请开 issue 告知。
 
 ## 原创性
 

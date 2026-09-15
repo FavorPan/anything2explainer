@@ -20,6 +20,7 @@ ap.add_argument('--step', type=int, default=4)
 ap.add_argument('--out', default='')
 ap.add_argument('--rail-top', type=int, default=100, help='内容区上界（有流程轨的镜头可传 175）')
 ap.add_argument('--bg', default='auto', help="幕底方案 stars|dots|auto（auto 读 src/config.ts 的 bg）。dots 时按 DotFieldBg 的网格坐标把点阵抠掉再统计，否则波前亮点会被数成背景碎屑")
+ap.add_argument('--style', default='auto', help="配色主题 mint|dark|auto（auto 读 src/config.ts 的 style；缺省字段视为 dark，保持旧判据）")
 a = ap.parse_args()
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,6 +31,45 @@ def cfg_bg():
     except OSError:
         return 'stars'
 BG = cfg_bg() if a.bg == 'auto' else a.bg
+
+def hue_of(r, g, b):
+    mx = np.maximum(np.maximum(r, g), b); mn = np.minimum(np.minimum(r, g), b)
+    d = np.maximum(mx - mn, 1e-6)
+    h = np.zeros_like(mx, dtype=float)
+    m1 = (mx == r); h[m1] = (60 * ((g[m1] - b[m1]) / d[m1]) % 360)
+    m2 = (mx == g) & ~m1; h[m2] = 60 * ((b[m2] - r[m2]) / d[m2]) + 120
+    m3 = (mx == b) & ~m1 & ~m2; h[m3] = (60 * ((r[m3] - g[m3]) / d[m3]) + 240)
+    return h
+
+def hue_window(r, g, b, center, half):
+    h = hue_of(r, g, b)
+    d = np.abs(h - center); d = np.minimum(d, 360 - d)
+    return d <= half
+
+def cfg_style():
+    try:
+        m = re.search(r"style:\s*'(mint|dark)'", open(f'{ROOT}/src/config.ts', encoding='utf-8').read())
+        return m.group(1) if m else 'dark'
+    except OSError:
+        return 'dark'
+STYLE = cfg_style() if a.style == 'auto' else a.style
+# mint（浅底）与 dark（黑底）的判色差异：
+#  · 主体：dark 找"亮像素"（>120）；mint 找"暗像素"（<200，含墨线/重点色块/灰字；白卡靠墨描边成框）
+#  · 柔光：dark = 中低亮度高饱和；mint = 近底色的低饱和浅色带（重点色光晕在浅底上是"变彩不变暗"）
+#  · 碎片：dark 用 b>r>g 的紫判据；mint 用重点色色相窗（薄荷 ≈155°，±30°）
+if STYLE == 'mint':
+    OBJ = lambda lum: lum < 200          # 主体像素（暗于浅底）
+    OBJ_LO = 200                          # br 计数下限同源
+    SOFT = lambda sat, lum: (sat > 0.06) & (lum > 200) & (lum < 244)
+    ACCENT_FRAG = lambda r, g, b, sat, lum: hue_window(r, g, b, 155.0, 30.0) & (sat > 0.30) & (lum > 60)
+    FRAG_NAME = '重点色碎片'
+else:
+    OBJ = lambda lum: lum > 120
+    OBJ_LO = 200
+    SOFT = lambda sat, lum: (sat > 0.25) & (lum > SOFT_LO) & (lum < 110)
+    ACCENT_FRAG = lambda r, g, b, sat, lum: (b > r) & (r > g) & (sat > 0.45) & (lum > 45)
+    FRAG_NAME = '紫色碎片'
+
 
 def dot_mask(W=1280, H=720, r=5):
     """点阵波幕底的屏幕坐标掩膜（与 src/common/DotFieldBg.tsx 同一组常量：设计坐标 960×540、步距 36、起点 (24,18)、等比放大）。
@@ -49,7 +89,7 @@ def dot_mask(W=1280, H=720, r=5):
 DOT_MASK = dot_mask()
 # 点阵底色 #0b0c11 本身带一点蓝（sat≈.35、lum≈12），会整屏落进「柔光」判据（sat>.25 且 10<lum<110）→ 空场检测被屏蔽、主角区柔光虚高；
 # dots 模式把柔光亮度下限抬到 22（实测底色+噪点 ≤18；紫柔光在内容区的亮度多在 25–110，基本不受影响）。
-SOFT_LO = 22 if BG == 'dots' else 10
+SOFT_LO = 22 if BG == 'dots' else 10  # dark 柔光亮度下限（mint 用 SOFT 闭包，不走这个）
 
 def parse_shots():
     if a.shots:
@@ -80,7 +120,7 @@ def analyze(i):
     r, g, b = arr[..., 0], arr[..., 1], arr[..., 2]
     lum = (r * 299 + g * 587 + b * 114) // 1000
     mx = arr.max(2); mn = arr.min(2); sat = np.where(mx > 0, (mx - mn) / np.maximum(mx, 1), 0)
-    bright = (lum[Z] > 120) & ~DOT_MASK[Z]   # 点阵波幕底（BG='dots'）的点先抠掉，不然波前 40–60 个亮点会被数成碎屑
+    bright = OBJ(lum)[Z] & ~DOT_MASK[Z]   # 主体像素（dark 亮 / mint 暗）；点阵波幕底（BG='dots'）的点先抠掉，不然波前亮点会被数成碎屑
     # 横向 41 / 纵向 13 的结构元：把一行大字的字与字（含千分位逗号、字距 ≤40px）并成一个物体，但不会把间距 ≥50 的胶囊行并起来
     obj = ndi.binary_dilation(bright, structure=np.ones((13, 41), bool))
     lab, n = ndi.label(obj)
@@ -94,7 +134,7 @@ def analyze(i):
             # 主体尺度：高度，或"宽度折算"——宽而不细的物体（一行大字、宽卡）按 min(w, 4h)/2.5 计，细线（h 很小）几乎不加分
             size = max(h, min(w, 4 * h) / 2.5)
             if size > hero_h: hero_h = size; hero_box = s
-    soft = (sat[Z] > 0.25) & (lum[Z] > SOFT_LO) & (lum[Z] < 110) & ~DOT_MASK[Z]
+    soft = SOFT(sat[Z], lum[Z]) & ~DOT_MASK[Z]
     glow_total = int(soft.sum())  # 全内容区柔光面积：扫光 / 光线 / 光环阶段很大 → 这类帧不算空场
     glow_hero = 0
     if hero_box is not None:
@@ -104,8 +144,8 @@ def analyze(i):
         if sub.any():
             lab2, n2 = ndi.label(sub)
             glow_hero = int(np.bincount(lab2.ravel())[1:].max()) if n2 else 0
-    # 紫色碎片：实心紫（排除柔光雾与虚线波纹），不膨胀，≥80px 才算一块
-    purple = (b[Z] > r[Z]) & (r[Z] > g[Z]) & (sat[Z] > 0.45) & (lum[Z] > 45)
+    # 重点色碎片（dark=紫 / mint=薄荷）：实心重点色（排除柔光雾与虚线波纹），不膨胀，≥80px 才算一块
+    purple = ACCENT_FRAG(r[Z], g[Z], b[Z], sat[Z], lum[Z])
     lab3, n3 = ndi.label(ndi.binary_dilation(purple, structure=np.ones((7, 25), bool)))  # 把一行字的逐字硬投影并成一块
     npurple = int((np.bincount(lab3.ravel())[1:] >= 80).sum()) if n3 else 0
     return hero_h, glow_hero, npurple, small, int(bright.sum()), glow_total
@@ -120,7 +160,7 @@ def diff_series(lo, hi):
 shots = parse_shots()
 if not shots:
     sys.exit('没有解析到镜头区间：检查 --storyboard 或用 --shots')
-lines = ['| 镜头 | 帧 | 主体尺度 中位/最小 px | 空场最长连续帧 | 柔光 主角区/全区 中位 px² | 紫色碎片 中位 | 最长静止帧 | 标记 |', '|---|---|---|---|---|---|---|---|']
+lines = [f'| 镜头 | 帧 | 主体尺度 中位/最小 px | 空场最长连续帧 | 柔光 主角区/全区 中位 px² | {FRAG_NAME}碎片 中位 | 最长静止帧 | 标记 |', '|---|---|---|---|---|---|---|---|']
 flags_total = {'高': 0, '中': 0, '低': 0}
 for sid, lo, hi in shots:
     hh = []; gl = []; pp = []; sm = []; gt = []
@@ -146,13 +186,13 @@ for sid, lo, hi in shots:
     elif med_h < 170:
         flags.append('低:主角<170px')
     if float(np.median(gl)) < 800: flags.append('低:主角无光')
-    if float(np.median(pp)) >= 8: flags.append('低:紫色碎片≥8')
+    if float(np.median(pp)) >= 8: flags.append(f'低:{FRAG_NAME}碎片≥8')
     if float(np.median(sm)) >= 10: flags.append('中:背景碎屑≥10')
     if sbest > 45: flags.append(f'低:静止{sbest}帧')
     for f in flags:
         flags_total[f[0]] += 1
     lines.append(f'| {sid} | {lo}–{hi} | {med_h:.0f} / {min_h} | {low_run} | {np.median(gl):.0f} / {np.median(gt):.0f} | {np.median(pp):.0f} | {sbest} | {"；".join(flags) or "OK"} |')
-head = f'# 构图/光/运动量化（{a.frames}，步长 {a.step}，幕底 {BG}）\n\n标记合计：高 {flags_total["高"]} / 中 {flags_total["中"]} / 低 {flags_total["低"]}。判据见 reference/composition-and-light.md §6。\n\n'
+head = f'# 构图/光/运动量化（{a.frames}，步长 {a.step}，幕底 {BG}，主题 {STYLE}）\n\n标记合计：高 {flags_total["高"]} / 中 {flags_total["中"]} / 低 {flags_total["低"]}。判据见 reference/composition-and-light.md §6。\n\n'
 txt = head + '\n'.join(lines) + '\n'
 if a.out:
     os.makedirs(os.path.dirname(a.out) or '.', exist_ok=True); open(a.out, 'w', encoding='utf-8').write(txt); print(a.out)

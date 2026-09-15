@@ -9,9 +9,11 @@ import {TOTAL_FRAMES, CHAPTER_STARTS, SENTENCES} from './timeline';
  * 底部章节进度条（半透明条体 y687–720、填充右缘 x=1280·N/TOTAL、n−1 根分隔线、章节名粗黑斜体 24px），来源于一条 MG 科普原片的实测模型（半透明条体 y687–720、填充右缘 x=1280·N/TOTAL、3 根分隔线、4 个章节名粗黑斜体 24px），
  * 章节切换帧来自 timeline.ts（tts_build.py 自动生成），当前章高亮保持到片尾。章名 ≤6 字为宜。
  */
+import {THEME} from '../theme';
+
 export const PROGRESS_ALPHA = 0.52;
-export const FILL_RGBA = 'rgba(190,170,250,0.52)';
-export const TRACK_RGBA = 'rgba(243,243,243,0.32)';
+export const FILL_RGBA = THEME.played; // 已播（dark 紫调 / mint 薄荷调）
+export const TRACK_RGBA = THEME.track; // 未播
 export const BAR_TOP = 687;
 export const BAR_H = 720 - BAR_TOP;
 const NCH = Math.max(1, CHAPTER_STARTS.length);
@@ -53,7 +55,7 @@ export const ProgressBar: React.FC<{dimKf?: Array<[number, number]>; frame?: num
         {dim < 0.999 ? <div style={{position: 'absolute', left: 0, top: 0, width: 1280, height: BAR_H, background: '#000', opacity: 1 - dim}} /> : null}
       </div>
       {DIVIDERS.map((x) => (
-        <div key={x} style={{position: 'absolute', left: x - DIVIDER_W / 2, top: 693 - BAR_TOP, width: DIVIDER_W, height: 22, background: 'rgba(255,255,255,0.9)'}} />
+        <div key={x} style={{position: 'absolute', left: x - DIVIDER_W / 2, top: 693 - BAR_TOP, width: DIVIDER_W, height: 22, background: THEME.divider}} />
       ))}
       {CHAPTERS.map((c, i) => (
         <div
@@ -62,7 +64,7 @@ export const ProgressBar: React.FC<{dimKf?: Array<[number, number]>; frame?: num
             position: 'absolute', left: c.cx, top: LABEL_TOP - BAR_TOP,
             transform: `translateX(-50%) skewX(${LABEL_SKEW}deg) scaleY(${LABEL_SCALE_Y})`, transformOrigin: '50% 50%',
             whiteSpace: 'nowrap', fontFamily: FONT_HEAVY, fontWeight: 900, fontSize: fitSize(c.text, LABEL_SLOT_W, LABEL_SIZE, 17), lineHeight: 1,
-            color: i === ch ? 'rgba(255,255,255,1)' : `rgba(255,255,255,${LABEL_DIM_ALPHA})`,
+            color: i === ch ? THEME.text : `rgba(${THEME.textRGB},${LABEL_DIM_ALPHA})`,
           }}
         >
           {c.text}
