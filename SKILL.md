@@ -50,7 +50,7 @@ description: 给一个主题，产出一条黑底 MG 风格（幕底可选星点
 
 阶段 5b 并行构建（40 分，其余各组各 1 个 agent）：组数按确认点 1 的时长表（样片档 8 组 → 这里派 G2–G8 共 7 个），每组 5–7 镜头。派单用 `reference/prompts.md` 的构建 prompt，附 `reference/agent-build-rules.md`，并把 G1 作为已验收的风格样例点名让它们读。并发受本机 / harness 的 pane 上限约束（派单前 `ListAgents` 看全机占用），稳妥做法是按 4 个一波派、完成即释放（见 `reference/lessons.md` §多 agent）。要求：边做边写盘、每镜头 ≥6 张 still 自检、30 帧测渲、**`python3 scripts/motion_check.py <Gn>` 达标（静止 ≤40%、最长 ≤0.7 s）**、BUILD_NOTES。收组后主会话跑 `python3 scripts/selfcheck.py`（几秒，静态查帧覆盖空洞 / 闪烁白名单超标 / 画面字面量不在事实清单）。构建组的合理偏离（换示例文本、补中文全称、改拓扑）只要有出处就放行，一句话裁定。
 
-阶段 6 渲染（5 分）：`npx tsc --noEmit` → `VER=v1 scripts/render.sh`（8000 帧 ≈ 4.5 分钟片长，渲 3–4 分钟，concurrency 6）→ `renders/<slug>_v1.mp4` + `fin_frames/` + `renders/sheet_v1.html`。主会话自己拼 6 张 overview contact sheet 通读一遍，并跑 `python3 scripts/frame_metrics.py --out qc/frame_metrics_v1.md`（空场 / 主角无光 / 碎屑标记先于 QC 派修）。
+阶段 6 渲染（5 分）：`npx tsc --noEmit` → 磁盘 `df -g` ≥10Gi（低了先清；≥98% 满时 remotion bundle 会静默丢 public/，字体静默回退不报错——render.sh 已带护栏与 ttf=4 核对）→ `VER=v1 scripts/render.sh`（8000 帧 ≈ 4.5 分钟片长，渲 3–4 分钟，concurrency 6）→ `renders/<slug>_v1.mp4` + `fin_frames/` + `renders/sheet_v1.html`。主会话自己拼 6 张 overview contact sheet 通读一遍，并跑 `python3 scripts/frame_metrics.py --out qc/frame_metrics_v1.md`（空场 / 主角无光 / 碎屑标记先于 QC 派修）。
 
 阶段 7 QC 与修复（60–90 分）：每章 1 个 QC agent（`reference/agent-qc-rules.md`）→ `qc/qc_v1_Cn.md`；按组派修复 agent（一个 agent 只修一到两组）；主会话修覆盖层。渲 v2 → 2 个复验 agent 逐条核 v1 问题 + 回归通读 → 小修 → v3。终检：闪烁白名单扫描 + frame_metrics 构图与光复核 + **`motion_check.py --frames fin_frames` 成片复测（组级低分辩率读数偏松，成片才是判据）** + 高光时刻 / 运镜清单逐条确认 + 遗留项 + 回归。样片两轮后：高 0 / 中 0 / 低 ≤5。
 

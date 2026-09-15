@@ -15,7 +15,7 @@
 - 构建组 G1–Gn（每章两组，各 5–7 个镜头；组数按片长，样片档 8 组；覆盖层（`src/overlay/`，片头/章节卡/顶部 HUD/流程轨/片尾）由主会话维护，构建组不要画这些）。每个镜头一个组件文件 `src/shots/Gn/SCxx.tsx`；`src/shots/Gn/index.ts` 导出 `SHOTS_Gn: ShotDef[]`（{id,from,to,Comp,layer?}，数组顺序即层序）与 `BG_Gn: BgSpec[]`（幕底覆写，见下）。**只改 `src/shots/Gn/**`**，不改 Main/Root/common/其他组；共用层要改的写进 `src/shots/Gn/BUILD_NOTES.md` 并在最终回复里提出。
 - 本片图元库 `src/ui.tsx`（从 `'../../ui'` 导入）：调色板 PURPLE/PURPLE_LIGHT/PURPLE_TECH/ORANGE/CORAL/RED_DEEP/GREEN/GREY/GREY_LINE/WHITE、GLOW_*/BLOOM/TEXT_GLOW；`CText/TechText/MonoText/Box/Pill/TagBlock/Svg/LineArrow/ArrowH/Check/Cross/DocIcon/DBIcon/ChunkCard/LLMIcon/TopCapsule/Counter`；动效小工具 `fadeIn/fadeOut/slideUp/scaleIn/exitAccel/exitFade/stagger/abs`。**优先用这些**，保证各组画风一致；缺什么就在自己组目录里补，不改 ui.tsx（要加进 ui.tsx 的写进 BUILD_NOTES）。
 - 光效 / 高光时刻 / 纵深 / 运镜图元 `src/fx.tsx`（从 `'../../fx'` 导入）：`LightBar/LightSweep/StageLine/GhostText/ghostOpacity/HaloRing/HeroGlow/BigNumber/countTo/Sparkle/GradBall/TiltPlane/CameraRig/camAt/SET_PIECE/setPiece`。
-- 共用层从 `'../../common'` 导入：`GlitchIn`（12 帧 glitch 入场）、`kf/stepKf/slideIn/powOutRemain/expOut/powIn/easeInOutPow/cubicBezier/BEZ_SCALE_IN/emphasisPulse/rnd`、`StarField/Fog`、`FONT_HEAVY/FONT_TECH/FONT_WIDE/FONT_ORB/FONT_MONO/FONT_SERIF`、`DirBlur`、`SubtitleLine/strokeShadow`（描边字样式复用，不是画字幕）、`TOTAL_FRAMES/CHAPTER_STARTS/SENTENCES`、`FootageTrack`（可选实拍）。字体已由 Main 的 `Fonts` 全局加载（Noto Sans SC 100–900、Exo 2 Italic、Audiowide、Orbitron），组件内**不要**再 delayRender 加载字体。
+- 共用层从 `'../../common'` 导入：`GlitchIn`（12 帧 glitch 入场）、`kf/stepKf/slideIn/powOutRemain/expOut/powIn/easeInOutPow/cubicBezier/BEZ_SCALE_IN/emphasisPulse/rnd`、`StarField/Fog`、`FONT_HEAVY/FONT_TECH/FONT_WIDE/FONT_ORB/FONT_MONO/FONT_SERIF`、`DirBlur`、`SubtitleLine/strokeShadow`（描边字样式复用，不是画字幕）、`TOTAL_FRAMES/CHAPTER_STARTS/SENTENCES`、`FootageTrack`（可选实拍）。字体已由 Main 的 `Fonts` 全局加载（Noto Sans SC 100–900、Exo 2 Italic、Audiowide、Orbitron），组件内**不要**再 delayRender 加载字体。**中文文本一律 FONT_HEAVY**（FONT_MONO 无 CJK 字形会走系统兜底，跨机不确定；MONO 只给代码/等宽数字）。
 - 全片常驻层由 Main 渲染：黑底 < 幕底（`config.bg`：雾底 Fog(y415→720 #000→#212121) + 星点 StarField，或点阵波 DotFieldBg）< 你的镜头 < 进度条(y687–720 半透明) < `layer:'aboveBar'` 镜头 < 字幕。**镜头组件不要画不透明黑底**（会盖掉幕底）；确需纯黑/无星（如片头第一帧、强调黑场）用 `BG_Gn: [{from,to,fog:false,stars:'none'}]`。
 - 随机只用 `rnd(...seeds)`（确定性），禁 `Math.random`。所有动画都是 N 的纯函数（不要用 useState/useEffect 做动画）。
 
@@ -47,7 +47,7 @@
 
 ## 5. 自检（必须做，写进 BUILD_NOTES）
 - `npx tsc --noEmit` 通过（在 remotion 目录）。
-- 每个镜头至少出 **6 张 still**：入场首帧+1、入场中段、入场完成、中间关键帧、离场中段、末帧。命令：`<项目根>/scripts/still.sh Gn <帧号,逗号分隔> <输出目录绝对路径> gN`（**tag 固定为本组 gN，一个组只留一个 bundle**；改代码后 `rm -rf <项目根>/build_dev_gN` 再跑；bundle ≈40MB，仍不要堆多个）。**禁止**直接 `npx remotion still src/index.ts …`（每次在 $TMPDIR 生成临时 bundle，曾把磁盘写满）。测渲输出到 /tmp/explainer_test_gN，看完即删。still.sh 的输出目录**用绝对路径**（脚本内部会 cd 到项目根）。输出到 `<项目根>/stills/Gn/`。**用 Read 看图**，检查：文字是否被字幕带/进度条/HUD 遮挡、是否溢出画布、颜色是否符合调色板、英文拼写、数字与调研一致、元素是否在字幕块起始帧 ±6 内出现；**主角墨迹高度 ≥170px、主角有光、背景无碎屑**（高光时刻镜头出 ≥10 张 still 覆盖扫光 / 白闪 / glitch 三段；有运镜的镜头出推近首 / 中 / 末 3 张）。
+- 每个镜头至少出 **6 张 still**：入场首帧+1、入场中段、入场完成、中间关键帧、离场中段、末帧。命令：`<项目根>/scripts/still.sh Gn <帧号,逗号分隔> <输出目录绝对路径> gN`（**tag 固定为本组 gN，一个组只留一个 bundle**；改代码后 `rm -rf <项目根>/build_dev_gN` 再跑；bundle ≈40MB，仍不要堆多个）。**禁止**直接 `npx remotion still src/index.ts …`（每次在 $TMPDIR 生成临时 bundle，曾把磁盘写满）。**bundle 建好后核对 `find build_dev_<tag> -name '*.ttf' | wc -l` = 4：磁盘 ≥98% 满时 bundle 会静默丢 public/，字体静默回退系统字体不报错**（渲染前磁盘要 ≥10Gi）。测渲输出到 /tmp/explainer_test_gN，看完即删。still.sh 的输出目录**用绝对路径**（脚本内部会 cd 到项目根）。输出到 `<项目根>/stills/Gn/`。**用 Read 看图**，检查：文字是否被字幕带/进度条/HUD 遮挡、是否溢出画布、颜色是否符合调色板、英文拼写、数字与调研一致、元素是否在字幕块起始帧 ±6 内出现；**主角墨迹高度 ≥170px、主角有光、背景无碎屑**（高光时刻镜头出 ≥10 张 still 覆盖扫光 / 白闪 / glitch 三段；有运镜的镜头出推近首 / 中 / 末 3 张）。
 - 与相邻组的组界帧：本组第一个镜头的首帧与最后一个镜头的末帧各出一张 still 放 `<项目根>/stills/Gn/boundary_*.png`。
 
 ## 6. 30 帧测渲
@@ -64,4 +64,4 @@
 ## 8. 闪烁（GlitchIn）使用白名单（满屏文字都闪会像掉帧，只给重点加）
 - **每个镜头最多 1 处 glitch，且只用于该镜头的重点词**（下表）；其余一切文字/标签/胶囊/数字/图标入场一律用 `SoftIn`（`ui.tsx`，8 帧淡入 + 10px 上浮，签名与 GlitchIn 相同可直接替换）或 fadeIn/slideUp/scaleIn。HUD 换词由 G0 用 SoftIn。
 - 白名单在本片 `分镜表.md` 末尾「全局约束」给出（每镜头最多一个重点词；样片实例见 skill `examples/rag/AGENT_RAG_BUILD_RULES.md` §8）。**不在表内的镜头一处 glitch 都不要。**
-- 用 `rgbSplit/slices` 的重口味 glitch 只允许片头、章节卡标题、主角登场、片尾大字。
+- 用 `rgbSplit/slices` 的重口味 glitch 只允许片头、章节卡标题、主角登场、片尾大字。**rgbSplit 副本画在下层：children 含不透明色底（TagBlock/色块）时 tint 副本被盖没等于没做**——色差感只能出现在裸白字/描边元素上。
