@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """主会话静态自检（不渲染，几秒跑完；与 QC 从像素查互补）：
   1) 帧覆盖：各组 index.ts 里的 {id, from, to} 与 分镜表.md 的镜头区间对账，报空洞 / 重叠 / 缺失；
-  2) 闪烁白名单：每个 SCxx.tsx 里 GlitchIn 的出现次数 vs 分镜表全局约束 §3 白名单；
+  2) 闪烁白名单：每个 SCxx.tsx 里 GlitchIn / GlitchText / glitchOpacity 的出现次数 vs 分镜表全局约束 §3 白名单；
   3) 画面字面量：抽取各 SC 文件里会上画面的字符串，剔除 CSS / 标识符噪声，列出不在事实清单里的词供人工核对。
 用法：python3 scripts/selfcheck.py [G1 G2 …]（不传则查全部已建组）"""
 import re, os, sys, glob
@@ -13,13 +13,16 @@ sb_shots = {}
 for m in re.finditer(r'^\| (SC\d\d)[^|]*\| (\d+)–(\d+) \|', sb, re.M):
     sb_shots[m.group(1)] = (int(m.group(2)), int(m.group(3)))
 
-# ---- 白名单 ----
-wl_text = re.search(r'\*\*闪烁白名单.*?\*\*：(.*?)。\*\*不在表内', sb, re.S)
+# ---- 白名单（兼容两种格式：SC01「词」/ 分隔，或旧样片的 SC01 词 · 分隔）----
+wl_text = re.search(r'\*\*闪烁白名单.*?\*\*：(.*?)。', sb, re.S)
 whitelist = {}
 if wl_text:
-    for part in wl_text.group(1).split('·'):
-        mm = re.match(r'\s*(SC\d\d)\s+(.*)', part.strip())
-        if mm: whitelist[mm.group(1)] = mm.group(2).strip()
+    for sid, w in re.findall(r'(SC\d\d)\s*「([^」]*)」', wl_text.group(1)):
+        whitelist[sid] = w.strip()
+    if not whitelist:
+        for part in wl_text.group(1).split('·'):
+            mm = re.match(r'\s*(SC\d\d)\s+(.*)', part.strip())
+            if mm: whitelist[mm.group(1)] = mm.group(2).strip()
 
 groups = sys.argv[1:] or sorted(os.path.basename(p) for p in glob.glob(f'{ROOT}/src/shots/G*'))
 problems = 0
@@ -58,7 +61,7 @@ for g in groups:
     for f in sorted(glob.glob(f'{ROOT}/src/shots/{g}/SC*.tsx')):
         sid = os.path.basename(f)[:4]
         src = open(f, encoding='utf-8').read()
-        n = len(re.findall(r'<GlitchIn\b', src)) + len(re.findall(r'glitchOpacity\(', src))
+        n = len(re.findall(r'<GlitchIn\b', src)) + len(re.findall(r'glitchOpacity\(', src)) + len(re.findall(r'<GlitchText\b', src))
         want = 1 if sid in whitelist else 0
         flag = '' if n == want else '  ✗'
         if n != want: problems += 1

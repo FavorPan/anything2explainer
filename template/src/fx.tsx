@@ -188,8 +188,8 @@ export const camAt = (N: number, keys: CamKey[], ease = easeInOutPow(2.5)) => {
   return keys[keys.length - 1];
 };
 /**
- * 相机：children 用世界坐标（默认相机 x=640,y=360,s=1 时与画布重合）。定点推近 = 同一 (x,y) 改 s（1→1.33，30–40 帧）；
- * 平移/整页滚动 = 改 (x,y)；承接 = 上一镜头末与下一镜头首用相同 keys。scale 对 box-shadow/描边同样放大，推近超过 1.4 时描边会显粗。
+ * 相机：children 用世界坐标（默认相机 x=640,y=360,s=1 时与画布重合）。必须以 children 包裹内容（self-closing 是类型错误）。
+ * 定点推近 = 同一 (x,y) 改 s（1→1.33，30–40 帧）；平移/整页滚动 = 改 (x,y)；承接 = 上一镜头末与下一镜头首用相同 keys。scale 对 box-shadow/描边同样放大，推近超过 1.4 时描边会显粗。
  */
 export const CameraRig: React.FC<{N: number; keys: CamKey[]; children: React.ReactNode; style?: React.CSSProperties}> = ({N, keys, children, style}) => {
   const c = camAt(N, keys);

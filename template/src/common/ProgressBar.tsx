@@ -16,19 +16,23 @@ export const FILL_RGBA = THEME.played; // 已播（dark 紫调 / mint 薄荷调�
 export const TRACK_RGBA = THEME.track; // 未播
 export const BAR_TOP = 687;
 export const BAR_H = 720 - BAR_TOP;
-const NCH = Math.max(1, CHAPTER_STARTS.length);
-export const DIVIDERS = Array.from({length: NCH - 1}, (_, i) => Math.round(((i + 1) * 1280) / NCH)); // n 章等宽分隔
-export const DIVIDER_W = 4;
-const CENTERS = Array.from({length: NCH}, (_, i) => Math.round(((i + 0.5) * 1280) / NCH));
 // 当前章高亮切在**章节卡起始帧**（上一章末句 to+3），不是本章首句帧——否则章节卡宣告新章的 45 帧里进度条还亮着上一章（QC v1 C2 #1；lessons「覆盖层」）
 const cardStart = (c: {n: number; from: number}) => {
   const prev = [...SENTENCES].reverse().find((x) => x.chapter < c.n);
   return prev ? prev.to + 3 : c.from;
 };
-export const CHAPTERS: Array<{text: string; cx: number; from: number}> = CHAPTER_STARTS.map((c, i) => ({text: c.title, cx: CENTERS[i] ?? 640, from: i === 0 ? c.from : cardStart(c)}));
+const FROMS = CHAPTER_STARTS.map((c, i) => (i === 0 ? c.from : cardStart(c)));
+// 分隔线/章名中心按**实际章时长比例**落位：分隔线 x = 该章切换帧的填充比例位置（1280·f/TOTAL），高亮切换瞬间填充右缘恰好触及分隔线。
+// 旧版按章数等宽分割（(i+1)·1280/NCH），章时长不均时每根线与真实章界错开几十 px、填充晚 10–17 s 才越过（第七片成片反馈）。
+export const DIVIDERS = FROMS.slice(1).map((f) => Math.round((1280 * f) / TOTAL_FRAMES));
+const EDGES = [0, ...DIVIDERS, 1280];
+const CENTERS = FROMS.map((_, i) => Math.round((EDGES[i] + EDGES[i + 1]) / 2));
+const SLOTS = EDGES.slice(0, -1).map((e, i) => EDGES[i + 1] - e - 30); // 章名不得压到分隔线上（英文章名长，自动缩到 17px 兜底）
+export const DIVIDER_W = 4;
+export const CHAPTERS: Array<{text: string; cx: number; from: number}> = CHAPTER_STARTS.map((c, i) => ({text: c.title, cx: CENTERS[i] ?? 640, from: FROMS[i]}));
 export const CHAPTER_HIGHLIGHT_END = TOTAL_FRAMES + 1;
 export const LABEL_SIZE = 24;
-export const LABEL_SLOT_W = Math.round(1280 / NCH) - 30; // 章名不得压到分隔线上（英文章名长，自动缩到 17px 兜底）
+export const LABEL_SLOT_W = Math.min(...SLOTS);
 export const LABEL_SCALE_Y = 0.9;
 export const LABEL_TOP = 690.5;
 export const LABEL_SKEW = -10;
@@ -63,7 +67,7 @@ export const ProgressBar: React.FC<{dimKf?: Array<[number, number]>; frame?: num
           style={{
             position: 'absolute', left: c.cx, top: LABEL_TOP - BAR_TOP,
             transform: `translateX(-50%) skewX(${LABEL_SKEW}deg) scaleY(${LABEL_SCALE_Y})`, transformOrigin: '50% 50%',
-            whiteSpace: 'nowrap', fontFamily: FONT_HEAVY, fontWeight: 900, fontSize: fitSize(c.text, LABEL_SLOT_W, LABEL_SIZE, 17), lineHeight: 1,
+            whiteSpace: 'nowrap', fontFamily: FONT_HEAVY, fontWeight: 900, fontSize: fitSize(c.text, SLOTS[i] ?? LABEL_SLOT_W, LABEL_SIZE, 17), lineHeight: 1,
             color: i === ch ? THEME.text : `rgba(${THEME.textRGB},${LABEL_DIM_ALPHA})`,
           }}
         >
