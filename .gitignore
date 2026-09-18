@@ -17,3 +17,9 @@ template/fin_count.txt
 .synapse/
 
 __pycache__/
+
+# 本地产物 / 工作目录（不进仓库）
+.cache/
+.playwright-mcp/
+.remotion/
+web-articles/
