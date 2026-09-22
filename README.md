@@ -36,8 +36,8 @@ Both cuts share one storyboard and 44 shots; the English cut re-times every shot
 | Length | your call (see table below); 2–8 minutes all work |
 | Language | Chinese or English (`lang` in `src/config.ts`); typography, subtitle budgets and TTS switch with it |
 | Look | themeable: mint light theme (default; ink line art on pale green canvas with mint accents and soft bokeh backdrop) or dark tech theme (black canvas, star field + fog gradient or dot-field wave backdrop, white line art + purple accents; the dot-field wave is ported from video-talkcraft); ultra-bold headline type; picked via `style` in `src/config.ts`, palette in `src/theme.ts` |
-| Persistent layers | 44px white-on-black-stroke subtitles, bottom chapter progress bar, top capsule HUD, optional pipeline rail |
-| Voiceover | Chinese: edge-tts `zh-CN-YunxiNeural` (Yunxi, male). English: kokoro-82m `am_liam` (Liam, male). Or bring your own TTS / finished audio |
+| Persistent layers | 44px white-on-black-stroke subtitles, bottom chapter progress bar, top capsule HUD, optional pipeline rail, optional `builtBy` end credit line (upstream prints `built by Anything2Explainer skill`; this repo defaults it to `''`) |
+| Voiceover | Chinese: edge-tts `zh-CN-YunxiNeural` (Yunxi, male, unmodified rate ≈5.5 chars/s). English: kokoro-82m `am_liam` (Liam, male). Or bring your own TTS / finished audio |
 
 Length drives how much ground the film covers, and the size of the whole pipeline:
 
@@ -47,7 +47,7 @@ Length drives how much ground the film covers, and the size of the whole pipelin
 | 3–5 min (reference tier) | 1200–1500 | 420–700 | 40–50 | 8 | ≈2 h | ≈2 GB |
 | 5–8 min | 1800–2400 | 700–1150 | 60–80 | 10–14 | ≈2–3 h | ≈3 GB |
 
-Chapter count is not tied to length. One chapter that goes deep or several short ones both work; the progress bar splits evenly across however many chapters the narration declares.
+Chapter count follows the content, within limits set by length: under 3 minutes use a single chapter (no chapter cards), 3–5 minutes 3–5 chapters of at least 45 s each, 5–8 minutes 4–6. The progress bar splits evenly across however many chapters the narration declares. A blank line in the narration marks a paragraph, which is also one shot: sentences inside a paragraph are separated by 10 frames, paragraph ends by 30, so the pause lands where the picture changes and every shot holds 1–1.5 s after its last element lands. The finished video runs 5–8% longer than the raw speech by design.
 
 ## Install
 
@@ -161,7 +161,7 @@ No. Remotion renders through headless Chromium on the CPU. The Chinese default v
 Yes. Put the finished audio at `public/assets/<slug>/audio.wav` and fill `src/common/timeline.ts` and `subs.ts` by hand (format documented at the top of `tts_build.py`). Everything downstream is unchanged.
 
 **Can I change the visual style?**
-There is one visual style, on purpose, with a single switch: the backdrop, `bg: 'stars' | 'dots'` in `src/config.ts`. To change anything else, edit `reference/style-guide.md` and `src/ui.tsx`; the shot code only uses those primitives.
+There is one visual style, on purpose, with a single switch: the backdrop, `bg` in `src/config.ts` (`'dots'` dot-field wave by default, `'stars'` star field with fog). To change anything else, edit `reference/style-guide.md` and `src/ui.tsx`; the shot code only uses those primitives.
 
 **Are the renders reproducible?**
 Yes. Every animation is a pure function of the frame number with seeded randomness, and text fitting is computed rather than measured in the DOM, so re-rendering produces identical frames.

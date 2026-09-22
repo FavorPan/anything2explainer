@@ -28,12 +28,18 @@ export const VIDEO = {
    * 英文片：rest 留空 ''（不显示），big 放主词/缩写，en 放全称或副标，tagline 一句话钩子。
    */
   title: {big: 'TOPIC', rest: '主题名', en: 'Full Name of the Topic', tagline: '一句话钩子'},
+  // 中英不要并排等大：big 与 rest 是"宽体缩写 + 中文词"（118 / 96px，字号差要看得出）；两个都是长词时只留一个，另一种语言落到 tagline。
   /** 片尾署名卡（内容压黑 + 末句字幕结束后 ≈2 s，aboveBar；不需要就设为 null）。
    *  例：{kicker: 'BASED ON', title: '<论文 / 书 / 报告标题>', byline: '<作者 · 出处 · 年份>', note: 'all visuals drawn in code'} */
   credit: null as {kicker: string; title: string; byline: string; note: string} | null,
-  /** 章节英文副标（顺序对应 narration 的 CHAPTER 1..n；章节卡从第 2 章起显示；英文片可留空 '' 不渲染） */
+  /** 片尾署名行（上游默认开）：有署名卡时排在卡下方，没有署名卡时单独居中。本库默认 ''（对外片已有 SOURCES 卡）；想要就填回 'built by Anything2Explainer skill'。 */
+  builtBy: '' as string,
+  /** 章节英文副标（顺序对应 narration 的 CHAPTER 1..n；章节卡从第 2 章起显示；英文片可留空 '' 不渲染）。
+   *  和章名一样是「说清讲什么」的标签，不是第二个创意标题；写这章的英文关键词或步骤序列（`Build · Run · Trace`）。 */
   chapterTech: ['Chapter One', 'Chapter Two'],
-  /** 顶部 HUD 胶囊（当前小节名）：按句 id 区间；相邻条目之间自动无空档；跨章节卡自动淡出。下面两条对应模板 narration.txt 的两句，按本片重写。 */
+  /** 顶部 HUD 胶囊（当前小节名）：按句 id 区间；相邻条目之间自动无空档；跨章节卡自动淡出。下面两条对应模板 narration.txt 的两句，按本片重写。
+   *  text 是导航标签：写「这一小节讲什么」的名词短语（`知识库构建` / `混合检索`），不要评价句或比喻（`感觉还行` / `两把尺子` 观众猜不出内容）。
+   *  tech 是胶囊下面那行英文副标（灰色 22px 小字，`TechSub`）：只放真正需要露出的英文术语，中文能说清就别加——它是注脚，不是第二个标题。 */
   hud: [
     {fromS: 'S01', toS: 'S01', text: '第一节名'},
     {fromS: 'S02', toS: 'S02', text: '第二节名', tech: 'Optional English'},

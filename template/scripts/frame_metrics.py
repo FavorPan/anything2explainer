@@ -27,9 +27,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def cfg_bg():
     try:
         m = re.search(r"bg:\s*'(stars|dots)'", open(f'{ROOT}/src/config.ts', encoding='utf-8').read())
-        return m.group(1) if m else 'stars'
+        return m.group(1) if m else 'dots'
     except OSError:
-        return 'stars'
+        return 'dots'
 BG = cfg_bg() if a.bg == 'auto' else a.bg
 
 def hue_of(r, g, b):
@@ -188,7 +188,7 @@ for sid, lo, hi in shots:
     if float(np.median(gl)) < 800: flags.append('低:主角无光')
     if float(np.median(pp)) >= 8: flags.append(f'低:{FRAG_NAME}碎片≥8')
     if float(np.median(sm)) >= 10: flags.append('中:背景碎屑≥10')
-    if sbest > 45: flags.append(f'低:静止{sbest}帧')
+    if sbest > 90: flags.append(f'中:静止{sbest}帧(>3s)')  # composition-and-light §7：完全静止 >3 s 才是缺陷，不为凑动作加漂浮；落位停留看 motion_check 的 hold
     for f in flags:
         flags_total[f[0]] += 1
     lines.append(f'| {sid} | {lo}–{hi} | {med_h:.0f} / {min_h} | {low_run} | {np.median(gl):.0f} / {np.median(gt):.0f} | {np.median(pp):.0f} | {sbest} | {"；".join(flags) or "OK"} |')

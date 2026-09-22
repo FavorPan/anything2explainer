@@ -1,7 +1,7 @@
 import React from 'react';
 import {useCurrentFrame} from 'remotion';
 import {GlitchIn, kf, emphasisPulse, easeInOutPow, SENTENCES, TOTAL_FRAMES, CHAPTER_STARTS, FONT_HEAVY, FONT_WIDE, FONT_ORB, clamp01, SQUEEZE, fitSize, EM_WIDE} from '../common';
-import {CText, TechText, Pill, TopCapsule, ArrowH, ACCENT, ACCENT_TECH, GREY, GREY_MID, TEXT, FILL, LINE, GLOW_ACCENT_S, PILL_SHADOW, fadeIn, slideUp} from '../ui';
+import {CText, TechText, TechSub, Pill, TopCapsule, ArrowH, ACCENT, ACCENT_TECH, GREY, GREY_MID, TEXT, FILL, LINE, GLOW_ACCENT_S, PILL_SHADOW, fadeIn, slideUp} from '../ui';
 import {THEME} from '../theme';
 import {VIDEO} from '../config';
 const clampFrames = (n: number, len: number) => clamp01(n / len);
@@ -82,7 +82,7 @@ export const ChapterCard: React.FC<{card: (typeof CHAPTER_CARDS)[number]}> = ({c
       <div style={{position: 'absolute', left: 640 - w / 2, top: 428, width: w, height: 3, background: LINE, opacity: 0.85}} />
       {card.tech ? (
         <div style={{position: 'absolute', opacity: fadeIn(n - 10, 10)}}>
-          <TechText cx={640} cy={470} text={card.tech} fontSize={32} scaleX={0.82} />
+          <TechSub cx={640} cy={470} text={card.tech} size={26} />
         </div>
       ) : null}
     </div>
@@ -120,15 +120,15 @@ export const Hud: React.FC = () => {
   if (sameChapter && prev && n < 10) {
     const t = easeInOutPow(2.5)(clampFrames(n, 10));
     const wNow = hudW(prev) + (w - hudW(prev)) * t;
-    const oldOp = 1 - clampFrames(n, 6);
-    const newOp = 1 - Math.pow(1 - clampFrames(n + 1, 9), 2.5);
+    const oldOp = 1 - clampFrames(n, 4); // 第五片 QC：旧词 4 帧淡完再进新词（新词 n≥4 起），零叠影
+    const newOp = 1 - Math.pow(1 - clampFrames(n - 3, 7), 2.5);
     return (
       <div style={{position: 'absolute', inset: 0, opacity: fadeTail}}>
         <Pill x={640 - wNow / 2} y={28} w={wNow} h={51} fill={ACCENT} sw={2} style={{filter: PILL_SHADOW}} />
         {oldOp > 0.01 ? <CText cx={640} cy={53.5} size={33} weight={700} letterSpacing={1} opacity={oldOp}>{prev.text}</CText> : null}
         <div style={{position: 'absolute', inset: 0, opacity: newOp, transform: `translateY(${((1 - newOp) * 4).toFixed(2)}px)`}}>
           <CText cx={640} cy={53.5} size={33} weight={700} letterSpacing={1}>{e.text}</CText>
-          {e.tech ? <TechText cx={640} cy={94} text={e.tech} fontSize={30} scaleX={0.8} /> : null}
+          {e.tech ? <TechSub cx={640} cy={92} text={e.tech} /> : null}
         </div>
       </div>
     );
@@ -189,14 +189,21 @@ export const EndCredit: React.FC = () => {
   const len = END_CREDIT_RANGE[1] - END_CREDIT_RANGE[0];
   const op = Math.min(fadeIn(n, 8), 1 - clampFrames(N - (END_CREDIT_RANGE[1] - 8), 8));
   const c = VIDEO.credit;
-  if (!c) return null;
+  const by = VIDEO.builtBy;
+  if (!c && !by) return null;
   return (
     <div style={{position: 'absolute', inset: 0, opacity: op}}>
-      <CText cx={640} cy={300} size={26} weight={500} color={GREY} letterSpacing={4}>{c.kicker}</CText>
-      <CText cx={640} cy={352} size={40} weight={700} color={TEXT}>{c.title}</CText>
-      <CText cx={640} cy={404} size={26} weight={500} color={GREY}>{c.byline}</CText>
-      <div style={{position: 'absolute', left: 560, top: 440, width: 160, height: 2, background: THEME.hr, transform: `scaleX(${fadeIn(n - 6, 16)})`}} />
-      <CText cx={640} cy={476} size={22} weight={500} color={GREY}>{c.note}</CText>
+      {c ? (
+        <>
+          <CText cx={640} cy={300} size={26} weight={500} color={GREY} letterSpacing={4}>{c.kicker}</CText>
+          <CText cx={640} cy={352} size={40} weight={700} color={TEXT}>{c.title}</CText>
+          <CText cx={640} cy={404} size={26} weight={500} color={GREY}>{c.byline}</CText>
+          <div style={{position: 'absolute', left: 560, top: 440, width: 160, height: 2, background: THEME.hr, transform: `scaleX(${fadeIn(n - 6, 16)})`}} />
+          <CText cx={640} cy={476} size={22} weight={500} color={GREY}>{c.note}</CText>
+        </>
+      ) : null}
+      {/* 片尾署名行（config.builtBy）：有署名卡时排在卡下方，没有卡时单独居中；本库默认 '' 不印 */}
+      {by ? <CText cx={640} cy={c ? 524 : 384} size={22} weight={500} color={GREY_MID} letterSpacing={2}>{by}</CText> : null}
     </div>
   );
 };
