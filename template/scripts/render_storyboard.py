@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """把 script/storyboard_src.md 中的时间令牌替换成 script/timeline.json 里的帧号，输出 项目根/分镜表.md。
-令牌：{S12.from} {S12.to} {S12.c3}（第 3 个字幕块起始帧）{C2}（第 2 章起始帧）{TOTAL}；均可带 ±整数：{S12.from-8}"""
+令牌：{S12.from} {S12.to} {S12.c3}（第 3 个字幕块起始帧）{T01.from}（片头口播句）{C2}（第 2 章起始帧）{TOTAL}；均可带 ±整数：{S12.from-8}"""
 import json, re, sys, os
 here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 项目根
 tl = json.load(open(f'{here}/script/timeline.json'))
@@ -18,7 +18,7 @@ def sub(m):
         else: raise SystemExit(f'bad token {m.group(0)}')
     return str(v + off)
 src = open(f'{here}/script/storyboard_src.md', encoding='utf-8').read()
-out = re.sub(r'\{(S\d\d|C\d|TOTAL)(?:\.(from|to|c\d+))?([+-]\d+)?\}', sub, src)
+out = re.sub(r'\{((?:S|T)\d\d|C\d|TOTAL)(?:\.(from|to|c\d+))?([+-]\d+)?\}', sub, src)
 open(f'{here}/分镜表.md', 'w', encoding='utf-8').write(out)
-left = re.findall(r'\{S\d\d[^}]*\}', out)
+left = re.findall(r'\{(?:S|T)\d\d[^}]*\}', out)
 print('written 分镜表.md; unresolved:', left[:5])

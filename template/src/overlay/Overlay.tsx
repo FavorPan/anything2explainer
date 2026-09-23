@@ -20,8 +20,10 @@ const exitOut = (n: number) => {
 };
 
 // ---------- 片头 ----------
+// 片头到第一章第一句为止（第一章前可以有片头口播 T 句，chapter 0 不算）
 // 配音未生成时（timeline.ts 占位、SENTENCES 为空）用兜底值，让探针 still 能渲染
-export const TITLE_RANGE: [number, number] = [1, (SENTENCES[0]?.from ?? 100) - 9];
+const FIRST_CHAP_SENT = SENTENCES.find((s) => s.chapter > 0) ?? SENTENCES[0];
+export const TITLE_RANGE: [number, number] = [1, (FIRST_CHAP_SENT?.from ?? 100) - 9];
 export const Title: React.FC = () => {
   const N = useCurrentFrame() + TITLE_RANGE[0];
   const [a, b] = TITLE_RANGE;

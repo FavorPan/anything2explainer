@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """配音 + 时间轴生成。项目根 = 本脚本所在 scripts/ 的上级目录。
 输入 narration.txt：
+  片头口播一句（放在第一个 # CHAPTER 之前） ← 读标题或钩子，压在片头卡上（LEAD 后起播），片头自动延长；不要留无声片头
   # CHAPTER <n> <标题>      章节标记（章节前自动加 chapter_gap 帧空白）
   空行                     段落分隔：空行前那句是**段末**（= 一个镜头讲完 / 切下一页），下一句前额外加 PARA_GAP 帧。
                            段内小句之间只有 GAP 帧（一口气），停顿只出现在段末——每句都停会让整片显得拖。
@@ -96,6 +97,7 @@ def parse(path):
     chap_title = ''
     pending_gap = 0
     para_break = False
+    seen_chapter = False
 
     def last_sent():
         for it in reversed(items):
@@ -112,7 +114,7 @@ def parse(path):
             continue
         m = re.match(r'^#\s*CHAPTER\s+(\d+)\s+(.*)$', line)
         if m:
-            chap = int(m.group(1)); chap_title = m.group(2).strip()
+            chap = int(m.group(1)); chap_title = m.group(2).strip(); seen_chapter = True
             s = last_sent()
             if s is not None:
                 s['para_end'] = True     # 章末也是段末；章前已有 CHAPTER_GAP，不再叠 PARA_GAP
@@ -124,7 +126,8 @@ def parse(path):
             pending_gap += int(m.group(1)); continue
         if line.startswith('#'):
             continue
-        items.append({'type': 'sent', 'chapter': chap, 'raw': line, 'gap_before': pending_gap + (PARA_GAP if para_break else 0), 'para_end': False})
+        # 第一个 # CHAPTER 之前的句子 = 片头口播（T 句，id 不占 S 编号，分镜令牌不用重排）
+        items.append({'type': 'sent', 'chapter': chap, 'raw': line, 'gap_before': pending_gap + (PARA_GAP if para_break else 0), 'para_end': False, 'title': not seen_chapter})
         pending_gap = 0
         para_break = False
     s = last_sent()
@@ -404,7 +407,7 @@ async def main(narr):
     t = LEAD / FPS
     audio_parts = []  # (start_sec, np.array)
     sentences = []; chapters = []
-    sid = 0
+    sid = 0; tid = 0
     total_chars = 0; total_words = 0; speech_sec = 0.0
     for it in items:
         if it['type'] == 'chapter':
@@ -418,10 +421,13 @@ async def main(narr):
             continue
         tts_text = sep.join(chunks)
         x, starts, dur = await synth_sentence(chunks, sep)
-        sid += 1
+        if it.get('title'):
+            tid += 1; sid_str = f'T{tid:02d}'
+        else:
+            sid += 1; sid_str = f'S{sid:02d}'
         subs = [(t + starts[i], t + (starts[i + 1] if i + 1 < len(starts) else dur)) for i in range(len(chunks))]
         f0 = int(round(t * FPS)) + 1; f1 = int(round((t + dur) * FPS))
-        sentences.append({'id': f'S{sid:02d}', 'chapter': it['chapter'], 'from': f0, 'to': f1, 'text': tts_text, 'para': bool(it.get('para_end')),
+        sentences.append({'id': sid_str, 'chapter': it['chapter'], 'from': f0, 'to': f1, 'text': tts_text, 'para': bool(it.get('para_end')),
                           'subs': [{'from': int(round(a * FPS)) + 1, 'to': int(round(b * FPS)), 'text': c} for c, (a, b) in zip(chunks, subs)]})
         audio_parts.append((t, x))
         total_chars += len(re.sub(r'[，。、！？：；“”（）,.!?:;()\-—…\s]', '', tts_text))
@@ -477,7 +483,7 @@ async def main(narr):
                     pass
             last = s['to'] - s['subs'][-1]['from'] + 1
             warn = '⚠' if s['para'] and last < SHORT_TAIL else ''
-            f.write(f"| {s['id']} | {s['chapter']} | {s['from']}–{s['to']} | {(s['to']-s['from']+1)/FPS:.1f}s | {last}{warn} | {'¶' if s['para'] else ''} | {'｜'.join(sb['text'] for sb in s['subs'])} |\n")
+            f.write(f"| {s['id']} | {s['chapter'] or '片头'} | {s['from']}–{s['to']} | {(s['to']-s['from']+1)/FPS:.1f}s | {last}{warn} | {'¶' if s['para'] else ''} | {'｜'.join(sb['text'] for sb in s['subs'])} |\n")
         f.write('\n## 章节起始帧\n')
         for c in chapters:
             f.write(f"- 第{c['n']}章 {c['title']}：f{c['from']}\n")
