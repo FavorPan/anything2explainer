@@ -16,7 +16,7 @@ sb_shots = {}
 for m in re.finditer(r'^\| (SC\d\d)[^|]*\| (\d+)–(\d+) \|', sb, re.M):
     sb_shots[m.group(1)] = (int(m.group(2)), int(m.group(3)))
 
-# ---- 白名单（兼容两种格式：SC01「词」/ 分隔，或旧样片的 SC01 词 · 分隔）----
+# ---- 白名单（兼容三种格式：SC01「词」/ 分隔，或旧样片的 SC01 词 · 分隔，或 §闪烁白名单 标题 + SC01 词｜SC02 词 行）----
 wl_text = re.search(r'\*\*闪烁白名单.*?\*\*：(.*?)。', sb, re.S)
 whitelist = {}
 if wl_text:
@@ -24,6 +24,12 @@ if wl_text:
         whitelist[sid] = w.strip()
     if not whitelist:
         for part in wl_text.group(1).split('·'):
+            mm = re.match(r'\s*(SC\d\d)\s+(.*)', part.strip())
+            if mm: whitelist[mm.group(1)] = mm.group(2).strip()
+if not whitelist:
+    m_sec = re.search(r'§闪烁白名单[^\n]*\n(.*?)(?:\n\s*\n|\n###|\Z)', sb, re.S)
+    if m_sec:
+        for part in re.split(r'[｜|·\n]', m_sec.group(1)):
             mm = re.match(r'\s*(SC\d\d)\s+(.*)', part.strip())
             if mm: whitelist[mm.group(1)] = mm.group(2).strip()
 
@@ -73,6 +79,11 @@ for g in groups:
 # ---- 2b) 扫光 ----
 sw = re.search(r'扫光白名单[^：:\n]*[：:]\s*([^\n]*)', sb)
 sweep_wl = set(re.findall(r'SC\d\d', sw.group(1))) if sw else set()
+if not sweep_wl:  # 兼容 §扫光白名单 标题格式（SCxx 在标题后的正文行里，段落以空行结束）
+    m_sw = re.search(r'§扫光白名单[^\n]*\n(.*?)(?:\n\s*\n|\n###|\Z)', sb, re.S)
+    if m_sw:
+        sweep_wl = set(re.findall(r'SC\d\d', m_sw.group(1)))
+        sw = m_sw  # 视为已声明白名单
 print(f'[sweep] 扫光白名单 {len(sweep_wl)} 条{"（分镜表没写扫光白名单 → 任何扫光都算超标）" if not sw else ""}：{" ".join(sorted(sweep_wl)) or "—"}')
 SWEEP = re.compile(r'<(LightSweep|StageLine|GhostText)\b')
 for g in groups:

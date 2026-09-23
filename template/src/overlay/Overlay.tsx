@@ -1,7 +1,7 @@
 import React from 'react';
 import {useCurrentFrame} from 'remotion';
 import {GlitchIn, kf, emphasisPulse, easeInOutPow, SENTENCES, TOTAL_FRAMES, CHAPTER_STARTS, FONT_HEAVY, FONT_WIDE, FONT_ORB, clamp01, SQUEEZE, fitSize, EM_WIDE} from '../common';
-import {CText, TechText, TechSub, Pill, TopCapsule, ArrowH, ACCENT, ACCENT_TECH, GREY, GREY_MID, TEXT, FILL, LINE, GLOW_ACCENT_S, PILL_SHADOW, fadeIn, slideUp} from '../ui';
+import {CText, TechSub, Pill, TopCapsule, ArrowH, ACCENT, ACCENT_TECH, GREY, GREY_MID, TEXT, FILL, LINE, GLOW_ACCENT_S, PILL_SHADOW, fadeIn, slideUp} from '../ui';
 import {THEME} from '../theme';
 import {VIDEO} from '../config';
 const clampFrames = (n: number, len: number) => clamp01(n / len);
@@ -43,7 +43,7 @@ export const Title: React.FC = () => {
         </div>
       </GlitchIn>
       <div style={{position: 'absolute', inset: 0, opacity: fadeIn(N - (a + 20), 10), transform: `translateY(${slideUp(N - (a + 20), 60, 18)}px)`}}>
-        <TechText cx={640} cy={446} text={VIDEO.title.en} fontSize={38} scaleX={0.82} weight={700} />
+        <TechSub cx={640} cy={446} text={VIDEO.title.en} />
       </div>
       {/* QC v1 C1 #1：tagline 原 a+40 起淡入、满态只有 13 帧读不完 → 提前到 a+28（满态 ≈ a+38 → 出画 a+66，28 帧）；完整署名另在片尾 EndCredit 停 3 s */}
       <div style={{position: 'absolute', inset: 0, opacity: fadeIn(N - (a + 28), 10)}}>
@@ -91,17 +91,18 @@ export const ChapterCard: React.FC<{card: (typeof CHAPTER_CARDS)[number]}> = ({c
 
 // ---------- 顶部 HUD 胶囊 ----------
 export type HudEntry = {from: number; to: number; text: string; tech?: string; w?: number};
+type ResolvedHud = HudEntry & {ch: number};
 /** HUD 条目由 config.hud 的句 id 解析；章首条目从章节卡结束的下一帧开始（fromOffset 默认：本章第一条 −8，其余 0）。 */
-export const HUD: HudEntry[] = (SENTENCES.length ? VIDEO.hud : []).map((h) => {
+export const HUD: ResolvedHud[] = (SENTENCES.length ? VIDEO.hud : []).map((h) => {
   const a = S(h.fromS), b = S(h.toS);
   const isChapterFirst = SENTENCES.find((x) => x.chapter === a.chapter)!.id === a.id && a.chapter > 1;
   const from = a.from + (h.fromOffset ?? (isChapterFirst ? -8 : 0));
   const isChapterLast = [...SENTENCES].reverse().find((x) => x.chapter === b.chapter)!.id === b.id;
   const to = b.to + (h.toOffset ?? (isChapterLast ? 2 : 0));
-  return {from, to, text: h.text, tech: h.tech, w: h.w};
+  return {from, to, ch: a.chapter, text: h.text, tech: h.tech, w: h.w};
 });
-// 同章相邻条目之间不留空档（G1 提示 742–751 无胶囊）：上一条延到下一条 from−1；跨章节卡（间隔 ≥30 帧）保持空档，由章节卡接管
-for (let i = 0; i < HUD.length - 1; i++) if (HUD[i + 1].from - HUD[i].to < 30) HUD[i].to = HUD[i + 1].from - 1;
+// 同章相邻条目之间不留空档（G1 提示 742–751 无胶囊；QC v1 C2：段末句间隔可达恰 31 帧，阈值法漏并——同章条目一律桥接，上一条延到下一条 from−1）；跨章节卡保持空档，由章节卡接管
+for (let i = 0; i < HUD.length - 1; i++) if (HUD[i].ch === HUD[i + 1].ch) HUD[i].to = HUD[i + 1].from - 1;
 export const HUD_RANGE: [number, number] = HUD.length ? [HUD[0].from, HUD[HUD.length - 1].to] : [0, 0];
 const hudW = (h: HudEntry) => h.w ?? Math.max(216, Math.round(h.text.replace(/[^一-龥]/g, '').length * 34 + h.text.replace(/[一-龥\s]/g, '').length * 20 + (h.text.match(/\s/g)?.length ?? 0) * 10 + 60));
 export const Hud: React.FC = () => {

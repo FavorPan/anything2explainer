@@ -449,12 +449,14 @@ async def main(narr):
     all_subs = []
     for s in sentences:
         for k, sb in enumerate(s['subs']):
-            if sb['to'] < sb['from']:
-                sb['to'] = sb['from']
+            if sb['to'] <= sb['from']:
+                continue  # 零/负时长块（对齐给某词 0 长度）直接丢弃——钳成 from==to 再被重叠修正压成 to=from−1，会渲成 1 帧双行叠印乱字（第十片 SC11 实锤）
             all_subs.append(dict(sb))
     for i in range(len(all_subs) - 1):
         if all_subs[i]['to'] >= all_subs[i + 1]['from']:
             all_subs[i]['to'] = all_subs[i + 1]['from'] - 1
+    _bad = [sb for sb in all_subs if sb['to'] < sb['from']]
+    assert not _bad, f'subs 出现负时长块（对齐故障）: {_bad[:3]}'
     # 字幕块宽度体检：超安全区的块会被 Subtitle.tsx 缩字号（>1.3 倍还会折两行压进内容区），正确做法是回去切文案
     over = [(sb, text_em(sb['text']) * SUB_SIZE) for sb in all_subs]
     over = [(sb, w) for sb, w in over if w > SUB_MAX_W]
