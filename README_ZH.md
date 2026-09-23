@@ -36,7 +36,7 @@ https://github.com/user-attachments/assets/e2771c68-a28c-4459-ac5a-a5b685181eeb
 | 时长 | 由你定（见下表），2–8 分钟都能做 |
 | 语言 | 中文或英文（`src/config.ts` 的 `lang`）；排版、字幕长度预算、配音默认值随它切换 |
 | 视觉 | 双主题（`src/theme.ts` 取值、`src/config.ts` 的 `style` 切换）：默认薄荷浅色（浅底墨线白卡 + 薄荷重点，光斑浮尘/浅点阵幕底）；暗色科技为黑底，幕底二选一：星点 + 雾底渐变，或点阵波（`bg`；点阵波移植自 video-talkcraft 的 dot-field-wave）；白/墨线条图形 + 主题重点色；超粗黑体大字 |
-| 常驻层 | 44px 白字黑边字幕、底部章节进度条、顶部胶囊 HUD、可选流程轨、可选片尾署名行（上游默认印 `built by Anything2Explainer skill`；本库 `config.builtBy` 默认 `''` 不印） |
+| 常驻层 | 44px 白字黑边字幕、底部章节进度条、顶部胶囊 HUD、可选流程轨、可选片尾署名行（上游默认印 `built by Anything2Explainer skill`；本库默认印 `built by FavorPan`） |
 | 配音 | 中文 edge-tts `zh-CN-YunxiNeural`（云希，男声，原速不加速 ≈5.5 字/秒）/ 英文 kokoro-82m `am_liam`（Liam，男声）；也可用你自己的 TTS 或成品配音 |
 
 时长决定内容丰富程度与全流程规模：

@@ -36,7 +36,7 @@ Both cuts share one storyboard and 44 shots; the English cut re-times every shot
 | Length | your call (see table below); 2–8 minutes all work |
 | Language | Chinese or English (`lang` in `src/config.ts`); typography, subtitle budgets and TTS switch with it |
 | Look | themeable: mint light theme (default; ink line art on pale green canvas with mint accents and soft bokeh backdrop) or dark tech theme (black canvas, star field + fog gradient or dot-field wave backdrop, white line art + purple accents; the dot-field wave is ported from video-talkcraft); ultra-bold headline type; picked via `style` in `src/config.ts`, palette in `src/theme.ts` |
-| Persistent layers | 44px white-on-black-stroke subtitles, bottom chapter progress bar, top capsule HUD, optional pipeline rail, optional `builtBy` end credit line (upstream prints `built by Anything2Explainer skill`; this repo defaults it to `''`) |
+| Persistent layers | 44px white-on-black-stroke subtitles, bottom chapter progress bar, top capsule HUD, optional pipeline rail, optional `builtBy` end credit line (upstream prints `built by Anything2Explainer skill`; this repo defaults it to `built by FavorPan`) |
 | Voiceover | Chinese: edge-tts `zh-CN-YunxiNeural` (Yunxi, male, unmodified rate ≈5.5 chars/s). English: kokoro-82m `am_liam` (Liam, male). Or bring your own TTS / finished audio |
 
 Length drives how much ground the film covers, and the size of the whole pipeline:
