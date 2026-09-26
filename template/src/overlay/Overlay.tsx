@@ -183,7 +183,7 @@ export const Ending: React.FC = () => {
   return <div style={{position: 'absolute', inset: 0, background: THEME.ending, opacity: op}} />;
 };
 /** 片尾署名（压黑之后、进度条压黑之前）：完整书名 / 作者 / 出版社，停 ≈3 s，让片头 tagline 读不完的信息在这里补齐（QC v1 C1 #1） */
-export const END_CREDIT_RANGE: [number, number] = [LAST_TO + 1, TOTAL_FRAMES - 26];  // 9110–9182：末句字幕 9109 结束、内容已全黑后再出署名卡（满态 ≈56 帧）；之后 26 帧纯黑
+export const END_CREDIT_RANGE: [number, number] = [LAST_TO + 1, TOTAL_FRAMES - 1];  // 末句结束、内容全黑后出署名卡：卡体保持到 TOTAL−1，满态 ≈(100−16)f，淡出压在末 8 帧内完成——不再留 26f 纯黑尾（旧值 TOTAL−26 实测可读仅 ~2.0s，不满足「署名可读 ≥2.5s」，muse-ban 第十二片 QC 实锤）
 export const EndCredit: React.FC = () => {
   const N = useCurrentFrame() + END_CREDIT_RANGE[0];
   const n = N - END_CREDIT_RANGE[0];
