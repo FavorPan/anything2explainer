@@ -69,7 +69,8 @@ export const ChapterCard: React.FC<{card: (typeof CHAPTER_CARDS)[number]}> = ({c
   const n = N - card.from;
   const exitN = N - (card.to - 11);
   const dy = -exitOut(exitN).dy;
-  const op = exitOut(exitN).op;
+  // 第十三片：exitOut 幂曲线视觉消失集中末 2-3 帧近切 → 叠 8f 线性淡出（card.to−8 起），均匀退墨、清空帧不变
+  const op = Math.min(exitOut(exitN).op, 1 - clampFrames(N - (card.to - 8), 8));
   const w = kf(n, [[0, 0], [20, 300]], easeInOutPow(2.5));
   return (
     <div style={{position: 'absolute', inset: 0, transform: `translateY(${dy}px)`, opacity: op}}>
