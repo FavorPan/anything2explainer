@@ -54,12 +54,17 @@ for sid, (a, b) in sorted(sb_shots.items()):
             print(f'  ✗ {sid} ({g}) 区间 {ba}–{bb} ≠ 分镜表 {a}–{b}'); problems += 1
 import json
 _tl = json.load(open(f'{ROOT}/script/timeline.json'))
-_chapter_starts = {c['from'] for c in _tl['chapters']}
+# 章节卡窗口锚点与 overlay 同源：各章首句 from（chapters[].from 是 prev_to+chapter_gap 的
+# 记账值，章节标记前挂 ## gap 时会与章首句 from 差开，不能用作判定）
+_chapter_starts = {}
+for _s in _tl['sentences']:
+    if _s['chapter'] > 0 and _s['chapter'] not in _chapter_starts:
+        _chapter_starts[_s['chapter']] = _s['from']
 ids = sorted(built, key=lambda k: built[k][0])
 for p, q in zip(ids, ids[1:]):
     gap = built[q][0] - built[p][1]
     # 章节卡占位（上一章末句 to+3 → 本章首句 from−9）是设计上的空洞，跳过
-    if gap > 1 and any(built[q][0] == cs - 8 for cs in _chapter_starts):  # 下一镜头首帧 = 本章首句 from−8
+    if gap > 1 and any(built[q][0] == cs - 8 for cs in _chapter_starts.values()):  # 下一镜头首帧 = 本章首句 from−8
         print(f'  · 章节卡空档 {p}→{q}: {built[p][1]}→{built[q][0]}（覆盖层接管）'); continue
     if gap > 1: print(f'  ✗ 空洞 {p}→{q}: {built[p][1]}→{built[q][0]} ({gap-1} 帧无镜头)'); problems += 1
     if gap < -4: print(f'  ✗ 重叠 {p}→{q}: {-gap+1} 帧'); problems += 1

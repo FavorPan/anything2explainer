@@ -86,10 +86,10 @@ export const ghostOpacity = (N: number, f0: number, until: number) => {
 const ellipsePerim = (rx: number, ry: number) => Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
 let haloSeq = 0;
 /**
- * 主体脚下的紫色光环（样片 SC44 护城河）：外环 rxo×ryo、内环 rxi×ryi；p 为白描边 draw-on 进度 0→1；fillOp 为紫渐变填充透明度；
+ * 主体脚下的紫色光环（样片 SC44 护城河）：外环 rxo×ryo、内环 rxi×ryi；p 为白描边 draw-on 进度 0→1；fillOp 为紫渐变填充透明度；stroke 为内外环描边色（默认 WHITE——浅色主题传主题描边色，WHITE 在 mint 底不可见）；
  * phase 为虚线波纹相位（样片 floor(n/2)*5）。half='back' 只画 cy 以上的后半环、'front' 只画前半环——先 back、再主体、再 front 即可让主体"站在环里"。
  */
-export const HaloRing: React.FC<{cx?: number; cy?: number; rxo?: number; ryo?: number; rxi?: number; ryi?: number; p?: number; fillOp?: number; phase?: number; half?: 'back' | 'front' | 'both'; opacity?: number; ripples?: boolean}> = ({cx = 640, cy = 428, rxo = 335, ryo = 78, rxi = 245, ryi = 44, p = 1, fillOp = 0.85, phase = 0, half = 'both', opacity = 1, ripples = true}) => {
+export const HaloRing: React.FC<{cx?: number; cy?: number; rxo?: number; ryo?: number; rxi?: number; ryi?: number; p?: number; fillOp?: number; phase?: number; half?: 'back' | 'front' | 'both'; opacity?: number; ripples?: boolean; stroke?: string}> = ({cx = 640, cy = 428, rxo = 335, ryo = 78, rxi = 245, ryi = 44, p = 1, fillOp = 0.85, phase = 0, half = 'both', opacity = 1, ripples = true, stroke = WHITE}) => {
   const idRef = React.useRef<string | undefined>(undefined);
   if (!idRef.current) idRef.current = `halo-${haloSeq++}`;
   const id = idRef.current;
@@ -111,8 +111,8 @@ export const HaloRing: React.FC<{cx?: number; cy?: number; rxo?: number; ryo?: n
       </defs>
       <g clipPath={clip}>
         <path d={ring} fill={`url(#${id}-g)`} fillRule="evenodd" opacity={fillOp} />
-        <ellipse cx={cx} cy={cy} rx={rxo} ry={ryo} fill="none" stroke={WHITE} strokeWidth={2.5} strokeDasharray={PO} strokeDashoffset={PO * (1 - pe)} />
-        <ellipse cx={cx} cy={cy} rx={rxi} ry={ryi} fill="none" stroke={WHITE} strokeWidth={2.5} strokeDasharray={PI} strokeDashoffset={PI * (1 - pe)} />
+        <ellipse cx={cx} cy={cy} rx={rxo} ry={ryo} fill="none" stroke={stroke} strokeWidth={2.5} strokeDasharray={PO} strokeDashoffset={PO * (1 - pe)} />
+        <ellipse cx={cx} cy={cy} rx={rxi} ry={ryi} fill="none" stroke={stroke} strokeWidth={2.5} strokeDasharray={PI} strokeDashoffset={PI * (1 - pe)} />
         {ripples ? [0.3, 0.55, 0.8].map((t, i) => (
           <ellipse key={i} cx={cx} cy={cy} rx={rxi + (rxo - rxi) * t} ry={ryi + (ryo - ryi) * t} fill="none" stroke={ACCENT_LIGHT} strokeWidth={1.6} strokeDasharray="16 22" strokeDashoffset={phase * (i % 2 ? -1 : 1) + i * 9} opacity={0.55 * fillOp} />
         )) : null}
