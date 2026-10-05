@@ -1,7 +1,7 @@
 import React from 'react';
 import {useCurrentFrame} from 'remotion';
 import {FONT_HEAVY} from './lib';
-import {kf} from './easing';
+import {kf, clamp01} from './easing';
 import {fitSize} from './textfit';
 import {TOTAL_FRAMES, CHAPTER_STARTS, SENTENCES} from './timeline';
 
@@ -45,10 +45,15 @@ export const currentChapter = (N: number) => {
   return idx; // 片头（第一章开始前）无高亮
 };
 
-export const ProgressBar: React.FC<{dimKf?: Array<[number, number]>; frame?: number}> = ({dimKf = [], frame}) => {
+/** fillBoost：片尾走满（QC v1 C5 #2）——[from, to] 窗内填充从自然位置（1280·from/TOTAL）线性续走到 1280，to 之后保持全满；不传 = 原 N/TOTAL 行为 */
+export const ProgressBar: React.FC<{dimKf?: Array<[number, number]>; frame?: number; fillBoost?: {from: number; to: number}}> = ({dimKf = [], frame, fillBoost}) => {
   const cur = useCurrentFrame();
   const N = frame ?? cur + 1;
-  const fillW = (1280 * N) / TOTAL_FRAMES;
+  let fillW = (1280 * N) / TOTAL_FRAMES;
+  if (fillBoost && N > fillBoost.from) {
+    const f0 = (1280 * fillBoost.from) / TOTAL_FRAMES;
+    fillW = f0 + (1280 - f0) * clamp01((N - fillBoost.from) / (fillBoost.to - fillBoost.from));
+  }
   const dim = dimKf.length ? kf(N, dimKf) : 1;
   const ch = currentChapter(N);
   return (

@@ -1,10 +1,10 @@
 import React from 'react';
 import {AbsoluteFill, Audio, Sequence, staticFile} from 'remotion';
-import {Fonts, BgTrack, DotFieldBg, LightBg, FootageTrack, ProgressBar, Subtitles} from './common';
+import {Fonts, BgTrack, DotFieldBg, LightBg, FootageTrack, ProgressBar, Subtitles, TOTAL_FRAMES} from './common';
 import {THEME} from './theme';
 import type {ShotDef, BgSpec, FootageSpec} from './common';
 import {VIDEO} from './config';
-import {SHOTS_OVERLAY, SHOTS_OVERLAY_TOP, BG_OVERLAY} from './overlay';
+import {SHOTS_OVERLAY, SHOTS_OVERLAY_TOP, BG_OVERLAY, LAST_TO, P2_END} from './overlay';
 import {SHOTS_G1, BG_G1, FOOTAGE_G1} from './shots/G1';
 import {SHOTS_G2, BG_G2, FOOTAGE_G2} from './shots/G2';
 import {SHOTS_G3, BG_G3, FOOTAGE_G3} from './shots/G3';
@@ -28,7 +28,7 @@ export const Stage: React.FC<{shots: ShotDef[]; bg: BgSpec[]; footage?: FootageS
         <s.Comp />
       </Sequence>
     ))}
-    <ProgressBar />
+    <ProgressBar fillBoost={{from: LAST_TO, to: P2_END}} />
     {shots.filter((s) => s.layer === 'aboveBar').map((s) => (
       <Sequence key={s.id} from={s.from - 1} durationInFrames={s.to - s.from + 1}>
         <s.Comp />

@@ -74,6 +74,9 @@ export type Theme = {
   divider: string; // 分隔线
   // 片尾与分隔线
   ending: string; // 片尾压底色（dark 压黑 / mint 压底色）
+  endingDark: string; // 片尾幕底渐暗→压黑主色（mint 用深墨绿压浅底；dark 同压黑）
+  creditLight: string; // 片尾署名在压黑后的浅色（压黑跨色用）
+  creditDark: string; // 片尾署名在压黑前的深色（压黑跨色用；dark 黑底无跨色带，与 creditLight 同值）
   hr: string; // 片头/署名卡下的短横线
   bigStroke: string; // 大字 WebkitTextStroke（dark 1px 黑边 / mint 无）
 };
@@ -137,6 +140,9 @@ export const THEMES: Record<StyleName, Theme> = {
     track: 'rgba(243,243,243,0.32)',
     divider: 'rgba(255,255,255,0.9)',
     ending: '#000000',
+    endingDark: '#000000',
+    creditLight: '#A6A6A6',
+    creditDark: '#A6A6A6',
     hr: 'rgba(255,255,255,0.35)',
     bigStroke: '1px #000',
   },
@@ -198,6 +204,9 @@ export const THEMES: Record<StyleName, Theme> = {
     track: 'rgba(34,58,50,0.13)',
     divider: 'rgba(255,255,255,0.9)',
     ending: '#F4FAF6',
+    endingDark: '#0E1F19',
+    creditLight: '#EDF4F0',
+    creditDark: '#8F998F',
     hr: 'rgba(34,58,50,0.35)',
     bigStroke: '0px rgba(0,0,0,0)',
   },

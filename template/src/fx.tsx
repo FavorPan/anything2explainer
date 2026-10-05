@@ -122,7 +122,8 @@ export const HaloRing: React.FC<{cx?: number; cy?: number; rxo?: number; ryo?: n
 };
 
 // ---- 主角柔光 ----
-/** 给矩形主角加双层紫柔光：放在主角组件之下，同位同尺寸。N 传入时 30 帧周期呼吸 ±15%；k 为强度 0→1（激活 8 帧渐亮用）。 */
+/** 给矩形主角加双层紫柔光：放在主角组件之下，同位同尺寸。N 传入时 30 帧周期呼吸 ±15%；k 为强度 0→1（激活 8 帧渐亮用）。
+ * mint 浅底传 color 要用深色（accentTech 级）；纯 boxShadow 光效（呼吸/渐亮）的像素差量小，motion_check cp 口径可能量不到——持续动词别只靠 HeroGlow 呼吸撑（十六片 G4 实锤）。 */
 export const HeroGlow: React.FC<{x: number; y: number; w: number; h: number; r?: number; N?: number; k?: number; color?: string}> = ({x, y, w, h, r = 16, N, k = 1, color}) => {
   const breathe = N === undefined ? 1 : 1 + 0.15 * Math.sin((2 * Math.PI * N) / 30);
   const a = clamp01(k) * breathe;

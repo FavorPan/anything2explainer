@@ -1,6 +1,7 @@
 import type {ShotDef, BgSpec} from '../common';
 import {TOTAL_FRAMES} from '../common';
-import {Title, TITLE_RANGE, ChapterCard, CHAPTER_CARDS, Hud, HUD_RANGE, Rail, RAILS, Ending, ENDING_RANGE, EndingTop, ENDING_TOP_RANGE, EndCredit, END_CREDIT_RANGE} from './Overlay';
+import {Title, TITLE_RANGE, ChapterCard, CHAPTER_CARDS, Hud, HUD_RANGE, Rail, RAILS, Ending, ENDING_RANGE, EndingTop, ENDING_TOP_RANGE, EndCredit, END_CREDIT_RANGE, LAST_TO, P2_END} from './Overlay';
+export {LAST_TO, P2_END};
 // 覆盖层（由主会话维护，构建组不要画这些）：片头 / 章节卡 / 顶部 HUD 胶囊 / 流程轨 / 片尾压黑。层序最低（Main 里排最前）。
 export const SHOTS_OVERLAY: ShotDef[] = [
   {id: 'OV-Title', from: TITLE_RANGE[0], to: TITLE_RANGE[1], Comp: Title},

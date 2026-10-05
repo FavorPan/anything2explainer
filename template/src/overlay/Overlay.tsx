@@ -172,47 +172,66 @@ export const Rail: React.FC<{spec: RailSpec}> = ({spec}) => {
   );
 };
 
-// ---------- 片尾 ----------
-// 压黑层挂在内容之上（Main 里 SHOTS_OVERLAY_TOP 排在所有内容组之后、进度条之下），从末句结束前 endingFade 帧起压黑，末镜头内容在被完全盖住后才结束；
-// 最后 30 帧再用 aboveBar 层把进度条也压黑 → 末段纯黑。
+// ---------- 片尾（三段式，QC v1 C5 #1/#2：内容淡出 → mint 幕底渐暗、进度条走满 → 末 40 帧压黑收署名） ----------
+// 段 1 内容淡出 = 末镜头自身离场（末 8 帧归零）+ HUD 自身 fadeTail，覆盖层不再提前压底（旧版 endingFade 薄荷洗从 7680 起
+// 把 SC23 内容与 HUD 提前 ~25f 洗没，C5 实测）。段 2 [LAST_TO+1, TOTAL−40]：幕底向深墨绿缓暗（峰 0.5，保署名深字可读），
+// 进度条同窗走满（Main 里 ProgressBar fillBoost）。段 3 末 40 帧压黑到全黑（20f 到位），aboveBar 层把进度条一并盖掉。
 const LAST_TO = SENTENCES[SENTENCES.length - 1]?.to ?? TOTAL_FRAMES - 60;
-export const ENDING_RANGE: [number, number] = [LAST_TO - VIDEO.endingFade, TOTAL_FRAMES];
+export {LAST_TO};
+export const P2_END = TOTAL_FRAMES - 40; // 压黑起点 7771
+const P3_RAMP = 20; // 压黑到全黑用 20f
+export const ENDING_RANGE: [number, number] = [LAST_TO + 1, TOTAL_FRAMES];
 export const Ending: React.FC = () => {
   const N = useCurrentFrame() + ENDING_RANGE[0];
-  const n = N - ENDING_RANGE[0];
-  const op = fadeIn(n, VIDEO.endingFade);
-  return <div style={{position: 'absolute', inset: 0, background: THEME.ending, opacity: op}} />;
+  const p2 = P2_END - ENDING_RANGE[0];
+  const op = N <= P2_END
+    ? 0.5 * Math.pow(clampFrames(N - ENDING_RANGE[0], p2), 1.6)
+    : Math.min(1, 0.5 + 0.5 * clampFrames(N - P2_END, P3_RAMP));
+  return <div style={{position: 'absolute', inset: 0, background: THEME.endingDark, opacity: op}} />;
 };
-/** 片尾署名（压黑之后、进度条压黑之前）：完整书名 / 作者 / 出版社，停 ≈3 s，让片头 tagline 读不完的信息在这里补齐（QC v1 C1 #1） */
-export const END_CREDIT_RANGE: [number, number] = [LAST_TO + 1, TOTAL_FRAMES - 1];  // 末句结束、内容全黑后出署名卡：卡体保持到 TOTAL−1，满态 ≈(100−16)f，淡出压在末 8 帧内完成——不再留 26f 纯黑尾（旧值 TOTAL−26 实测可读仅 ~2.0s，不满足「署名可读 ≥2.5s」，muse-ban 第十二片 QC 实锤）
-export const EndCredit: React.FC = () => {
-  const N = useCurrentFrame() + END_CREDIT_RANGE[0];
-  const n = N - END_CREDIT_RANGE[0];
-  const len = END_CREDIT_RANGE[1] - END_CREDIT_RANGE[0];
-  const op = Math.min(fadeIn(n, 8), 1 - clampFrames(N - (END_CREDIT_RANGE[1] - 8), 8));
+/** 片尾署名（完整书名 / 作者 / 出版社 + built by 行）：停 ≈3 s，让片头 tagline 读不完的信息在这里补齐（QC v1 C1 #1）；
+ * 卡体保持到 TOTAL−1，淡出压在末 8 帧内完成——「署名可读 ≥2.5s」，muse-ban 第十二片 QC 实锤 */
+export const END_CREDIT_RANGE: [number, number] = [LAST_TO + 1, TOTAL_FRAMES - 1];
+const EndCreditBody: React.FC<{light?: boolean}> = ({light}) => {
   const c = VIDEO.credit;
   const by = VIDEO.builtBy;
   if (!c && !by) return null;
   return (
-    <div style={{position: 'absolute', inset: 0, opacity: op}}>
+    <>
       {c ? (
         <>
-          <CText cx={640} cy={300} size={26} weight={500} color={GREY} letterSpacing={4}>{c.kicker}</CText>
-          <CText cx={640} cy={352} size={40} weight={700} color={TEXT}>{c.title}</CText>
-          <CText cx={640} cy={404} size={26} weight={500} color={GREY}>{c.byline}</CText>
-          <div style={{position: 'absolute', left: 560, top: 440, width: 160, height: 2, background: THEME.hr, transform: `scaleX(${fadeIn(n - 6, 16)})`}} />
-          <CText cx={640} cy={476} size={22} weight={500} color={GREY}>{c.note}</CText>
+          <CText cx={640} cy={300} size={26} weight={500} color={light ? THEME.creditLight : GREY} letterSpacing={4}>{c.kicker}</CText>
+          <CText cx={640} cy={352} size={40} weight={700} color={light ? THEME.creditLight : TEXT}>{c.title}</CText>
+          <CText cx={640} cy={404} size={26} weight={500} color={light ? THEME.creditLight : GREY}>{c.byline}</CText>
+          <div style={{position: 'absolute', left: 560, top: 440, width: 160, height: 2, background: light ? THEME.creditLight : THEME.hr, opacity: light ? 0.6 : 1, transform: `scaleX(${fadeIn(useCurrentFrame() - 6, 16)})`}} />
+          <CText cx={640} cy={476} size={22} weight={500} color={light ? THEME.creditLight : GREY}>{c.note}</CText>
         </>
       ) : null}
       {/* 片尾署名行（config.builtBy）：有署名卡时排在卡下方，没有卡时单独居中；本库默认 '' 不印 */}
-      {by ? <CText cx={640} cy={c ? 524 : 384} size={22} weight={500} color={GREY_MID} letterSpacing={2}>{by}</CText> : null}
-    </div>
+      {by ? <CText cx={640} cy={c ? 524 : 384} size={22} weight={500} color={light ? THEME.creditLight : THEME.creditDark} letterSpacing={2}>{by}</CText> : null}
+    </>
   );
 };
-// QC v1 C4 #2：进度条不能在画面全黑后孤悬 2 s → 进度条随 endingFade 一起压黑（aboveBar 层），署名卡在其上（见 index.ts 层序）
-export const ENDING_TOP_RANGE: [number, number] = [LAST_TO - VIDEO.endingFade, TOTAL_FRAMES];
+export const EndCredit: React.FC = () => {
+  const N = useCurrentFrame() + END_CREDIT_RANGE[0];
+  const n = N - END_CREDIT_RANGE[0];
+  const op = Math.min(fadeIn(n, 8), 1 - clampFrames(N - (END_CREDIT_RANGE[1] - 8), 8));
+  // 压黑跨色必须**硬切**，不能插值渐变：幕底 ramp 必然穿过深灰(creditDark luma≈150)与浅色(≈242)的中点明度≈196，
+  // 任何连续过渡（含 crossfade）在该带内必有反差塌陷帧（复验 B 实测 v2 10f 渐变下 7756–7766 最重 6 帧全隐）。
+  // 切点取 phase-2 ramp 的 0.63 处（bg luma≈191；深色撑到 bg≈184、浅色 bg≈200 即够，双侧窗口交叠 ≈5f），
+  // 实测 still 署名区两侧最差帧 maxdiff ≥48（C5 #1：署名收在压黑里）
+  const x = N >= ENDING_RANGE[0] + Math.round((P2_END - ENDING_RANGE[0]) * 0.63) ? 1 : 0;
+  return (
+    <>
+      {x < 1 ? <div style={{position: 'absolute', inset: 0, opacity: op * (1 - x)}}><EndCreditBody /></div> : null}
+      {x > 0 ? <div style={{position: 'absolute', inset: 0, opacity: op * x}}><EndCreditBody light /></div> : null}
+    </>
+  );
+};
+// 段 3 才压进度条（段 2 走满要可见）：aboveBar 层与 Ending 同色，压黑起点起 20f 到全黑
+export const ENDING_TOP_RANGE: [number, number] = [P2_END, TOTAL_FRAMES];
 export const EndingTop: React.FC = () => {
   const N = useCurrentFrame() + ENDING_TOP_RANGE[0];
-  const op = fadeIn(N - ENDING_TOP_RANGE[0], VIDEO.endingFade);
-  return <div style={{position: 'absolute', inset: 0, background: THEME.ending, opacity: op}} />;
+  const op = clampFrames(N - ENDING_TOP_RANGE[0], P3_RAMP);
+  return <div style={{position: 'absolute', inset: 0, background: THEME.endingDark, opacity: op}} />;
 };

@@ -100,7 +100,8 @@ def parse_shots():
         return out
     out = []
     for line in open(a.storyboard, encoding='utf-8'):
-        m = re.match(r'^\|\s*(SC\d+)[^|]*\|\s*(\d+)\s*[–-]\s*(\d+)\s*\|', line)
+        # 帧区间格允许括号后缀（章末镜写作「1023–1231（C1 末）」，无此容错则章末镜整行漏析、指标表缺行）
+        m = re.match(r'^\|\s*(SC\d+)[^|]*\|\s*(\d+)\s*[–-]\s*(\d+)\s*(?:[（(][^）)]*[）)])?\s*\|', line)
         if m:
             out.append((m.group(1), int(m.group(2)), int(m.group(3))))
     # 去重（分镜表后面的白名单/衔接表也以 SC 开头但没有帧区间列，正则已排除）

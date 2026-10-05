@@ -13,17 +13,17 @@ sb = open(f'{ROOT}/分镜表.md', encoding='utf-8').read()
 
 # ---- 分镜表镜头区间 ----
 sb_shots = {}
-for m in re.finditer(r'^\| (SC\d\d)[^|]*\| (\d+)–(\d+) \|', sb, re.M):
+for m in re.finditer(r'^\| (SC\d\d)[^|]*\| (\d+)–(\d+)(?:（[^）]*）)? \|', sb, re.M):
     sb_shots[m.group(1)] = (int(m.group(2)), int(m.group(3)))
 
-# ---- 白名单（兼容三种格式：SC01「词」/ 分隔，或旧样片的 SC01 词 · 分隔，或 §闪烁白名单 标题 + SC01 词｜SC02 词 行）----
-wl_text = re.search(r'\*\*闪烁白名单.*?\*\*：(.*?)。', sb, re.S)
+# ---- 白名单（兼容三种格式：SC01「词」/ 分隔，或 SC01 词 · / 分隔（标题与冒号间可有说明括号），或 §闪烁白名单 标题 + SC01 词｜SC02 词 行）----
+wl_text = re.search(r'\*\*闪烁白名单[^：]*：(.*?)。', sb, re.S)
 whitelist = {}
 if wl_text:
     for sid, w in re.findall(r'(SC\d\d)\s*「([^」]*)」', wl_text.group(1)):
         whitelist[sid] = w.strip()
     if not whitelist:
-        for part in wl_text.group(1).split('·'):
+        for part in re.split(r'[·/]', wl_text.group(1)):
             mm = re.match(r'\s*(SC\d\d)\s+(.*)', part.strip())
             if mm: whitelist[mm.group(1)] = mm.group(2).strip()
 if not whitelist:
@@ -72,14 +72,24 @@ for p, q in zip(ids, ids[1:]):
 # ---- 2) 闪烁 ----
 print(f'[glitch] 白名单 {len(whitelist)} 条')
 for g in groups:
+    # 组内共用图元可能封装 GlitchIn（如 DeckCard titleGlitchAt）——统计其调用数供人工归属，
+    # 镜头文件计数只算本文件直接调用；封装调用对应的镜头看 SCxx 里传的 *GlitchAt 帧号（QC 逐帧核对）
+    ui_hits = 0
+    for uf in glob.glob(f'{ROOT}/src/shots/{g}/*ui*.tsx'):
+        usrc = open(uf, encoding='utf-8').read()
+        ui_hits += len(re.findall(r'<GlitchIn\b', usrc)) + len(re.findall(r'glitchOpacity\(', usrc)) + len(re.findall(r'<GlitchText\b', usrc))
     for f in sorted(glob.glob(f'{ROOT}/src/shots/{g}/SC*.tsx')):
         sid = os.path.basename(f)[:4]
         src = open(f, encoding='utf-8').read()
         n = len(re.findall(r'<GlitchIn\b', src)) + len(re.findall(r'glitchOpacity\(', src)) + len(re.findall(r'<GlitchText\b', src))
+        # 该镜头是否把白名单帧交给组内图元（titleGlitchAt/qGlitchAt={…}（可为三元表达式）/nameAccent={{word,f0}} 等封装 props）
+        wrapped = bool(re.search(r'\w*GlitchAt=\{', src) or re.search(r'nameAccent=\{\{', src))
         want = 1 if sid in whitelist else 0
-        flag = '' if n == want else '  ✗'
-        if n != want: problems += 1
-        print(f'  {sid} GlitchIn×{n} (白名单 {whitelist.get(sid, "—")}){flag}')
+        ok = (n == want) or (n == 0 and wrapped and want == 1)
+        flag = '' if ok else '  ✗'
+        if not ok: problems += 1
+        extra = f' [组内图元封装 ×{ui_hits}，本镜头经 props 传入]' if wrapped and n == 0 else ''
+        print(f'  {sid} GlitchIn×{n} (白名单 {whitelist.get(sid, "—")}){flag}{extra}')
 
 # ---- 2b) 扫光 ----
 sw = re.search(r'扫光白名单[^：:\n]*[：:]\s*([^\n]*)', sb)
