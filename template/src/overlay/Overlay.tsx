@@ -42,8 +42,19 @@ export const Title: React.FC = () => {
           ) : null}
         </div>
       </GlitchIn>
+      {/* mit-48h-en QC v1 C1 #2/#3：英文片 rest 留空时原走 TechSub 缩成 ~24px 细灰（行宽 370 vs 预核 1020）、钩子小字整行缺失
+          → en 独立 60px Noto 900 主行（不占 rest 的并排 baseline 行位）+ hook 26px 灰小字；中文片 en 仍是 TechSub 英文全称（口径不变） */}
       <div style={{position: 'absolute', inset: 0, opacity: fadeIn(N - (a + 20), 10), transform: `translateY(${slideUp(N - (a + 20), 60, 18)}px)`}}>
-        <TechSub cx={640} cy={446} text={VIDEO.title.en} />
+        {VIDEO.title.rest ? (
+          <TechSub cx={640} cy={446} text={VIDEO.title.en} />
+        ) : (
+          <div style={{position: 'absolute', left: 0, top: 418, width: 1280, textAlign: 'center', fontFamily: FONT_HEAVY, fontWeight: 900, fontSize: 60, color: TEXT, lineHeight: 1, letterSpacing: 2, transform: `scaleX(${SQUEEZE})`, transformOrigin: '50% 50%', WebkitTextStroke: THEME.bigStroke, paintOrder: 'stroke fill'}}>{VIDEO.title.en}</div>
+        )}
+        {VIDEO.title.hook ? (
+          <CText cx={640} cy={568} size={26} weight={500} color={GREY} letterSpacing={1}>
+            {VIDEO.title.hook}
+          </CText>
+        ) : null}
       </div>
       {/* QC v1 C1 #1：tagline 原 a+40 起淡入、满态只有 13 帧读不完 → 提前到 a+28（满态 ≈ a+38 → 出画 a+66，28 帧）；完整署名另在片尾 EndCredit 停 3 s */}
       <div style={{position: 'absolute', inset: 0, opacity: fadeIn(N - (a + 28), 10)}}>

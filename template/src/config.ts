@@ -25,9 +25,10 @@ export const VIDEO = {
   bg: 'stars' as 'stars' | 'dots',
   /**
    * 片头。中文片：big 用 Audiowide 宽体（缩写/英文词），rest 用 Noto 900（中文部分），en 是英文全称，tagline 一句话钩子。
-   * 英文片：rest 留空 ''（不显示），big 放主词/缩写，en 放全称或副标，tagline 一句话钩子。
+   * 英文片：rest 留空 ''（不显示），big 放主词/缩写，en 放全称主行（Noto 900 60px，mit-48h-en QC v1 C1：不是 TechSub 小灰字），
+   * tagline 一句话钩子，hook 片头钩子小字（Noto 灰 26px，'' 不渲染）。
    */
-  title: {big: 'TOPIC', rest: '主题名', en: 'Full Name of the Topic', tagline: '一句话钩子'},
+  title: {big: 'TOPIC', rest: '主题名', en: 'Full Name of the Topic', tagline: '一句话钩子', hook: ''},
   // 中英不要并排等大：big 与 rest 是"宽体缩写 + 中文词"（118 / 96px，字号差要看得出）；两个都是长词时只留一个，另一种语言落到 tagline。
   /** 片尾署名卡（内容压黑 + 末句字幕结束后 ≈2 s，aboveBar；不需要就设为 null）。
    *  例：{kicker: 'BASED ON', title: '<论文 / 书 / 报告标题>', byline: '<作者 · 出处 · 年份>', note: 'all visuals drawn in code'} */
